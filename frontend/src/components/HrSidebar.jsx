@@ -1,98 +1,98 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
-export default function HRSidebar({ activeModule }) {
+export default function HRSidebar({ activeModule, setActiveModule }) {
     const navigate = useNavigate();
+    const location = useLocation();
+
+    // Unified menu items grouped sequentially like Employee Sidebar structure
+    const navItems = [
+        { id: 'profile', label: 'Profile', icon: '👤', path: '/hr/profile' },
+        { id: 'dashboard', label: 'Dashboard', icon: '📊', path: '/hr/dashboard' },
+        { id: 'attendance', label: 'Staff Attendance', icon: '⏱', path: '/hr/attendance' },
+        { id: 'leave', label: 'Leave', icon: '📅', path: '/hr/leave' },
+    ];
+
+    const handleNavigation = (id, path) => {
+        if (setActiveModule) {
+            setActiveModule(id);
+        } else {
+            navigate(path);
+        }
+    };
 
     const handleLogout = () => {
-        localStorage.clear();
+        localStorage.clear(); 
         navigate('/');
     };
 
-    const menuItems = [
-        { id: 'dashboard', label: 'Dashboard Overview', icon: '📊', path: '/hr/dashboard' },
-        { id: 'ledger', label: 'Employee Ledger', icon: '👥', path: '/hr/dashboard' }, // Links to dashboard's employee ledger tab view
-        { id: 'attendance', label: 'Staff Attendance', icon: '⏱', path: '/hr/attendance' },
-    ];
-
-    const personalItems = [
-        { id: 'profile', label: 'My HR Profile', icon: '👤', path: '/hr/profile' },
-        { id: 'leave', label: 'Request My Leave', icon: '📅', path: '/hr/leave' },
-    ];
-
     return (
-        <aside className="w-64 h-screen sticky top-0 border-r border-slate-100 p-6 flex flex-col justify-between flex-shrink-0 bg-white select-none">
-            <div className="space-y-8">
+       
+        <aside className="w-full md:w-64 h-screen sticky top-0 bg-white dark:bg-zinc-900 border-b md:border-b-0 md:border-r border-zinc-100 dark:border-zinc-800/60 flex flex-col justify-between p-4 md:p-6 transition-colors duration-200 flex-shrink-0 z-30 select-none">
 
-                {/* Workspace Brand Hub */}
-                <div className="flex items-center gap-3 px-2">
-                    <div className="w-10 h-10 rounded-xl bg-teal-600 flex items-center justify-center text-white text-lg font-bold shadow-lg shadow-teal-100">
+            {/* Top Section: Corporate Brand & App Label */}
+            <div className="space-y-6">
+                <div className="flex items-center gap-3 px-2 py-1">
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-700 to-indigo-800 flex items-center justify-center text-white text-lg font-bold shadow-md shadow-indigo-100 dark:shadow-none">
                         HR
                     </div>
                     <div>
-                        <h2 className="text-sm font-black text-slate-900 tracking-tight leading-none">HR Management</h2>
-                        <span className="text-[10px] font-bold text-slate-400 font-mono mt-1 block tracking-tighter">v3.0.0-FLASH</span>
+                        <h2 className="text-sm font-bold text-zinc-900 dark:text-zinc-50 tracking-tight leading-none">HR Management</h2>
+                        <span className="text-[10px] font-bold text-gray-400 font-mono mt-1 block tracking-tighter">v3.0.0-FLASH</span>
                     </div>
                 </div>
 
-                {/* Core Administrative Utilities */}
-                <div className="space-y-6">
-                    <div>
-                        <span className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] px-3 mb-2.5">
-                            Management Core
-                        </span>
-                        <nav className="space-y-1">
-                            {menuItems.map((item) => (
-                                <button
-                                    key={item.id}
-                                    type="button"
-                                    onClick={() => navigate(item.path)}
-                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-150 border ${activeModule === item.id
-                                            ? 'bg-teal-50 text-teal-600 border-teal-100/70 shadow-xs'
-                                            : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 border-transparent'
-                                        }`}
-                                >
-                                    <span className="text-base leading-none">{item.icon}</span>
-                                    <span>{item.label}</span>
-                                </button>
-                            ))}
-                        </nav>
-                    </div>
-
-                    {/* Personal Account Utilities */}
-                    <div>
-                        <span className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] px-3 mb-2.5">
-                            Personal Space
-                        </span>
-                        <nav className="space-y-1">
-                            {personalItems.map((item) => (
-                                <button
-                                    key={item.id}
-                                    type="button"
-                                    onClick={() => navigate(item.path)}
-                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-150 border ${activeModule === item.id
-                                            ? 'bg-teal-50 text-teal-600 border-teal-100/70 shadow-xs'
-                                            : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 border-transparent'
-                                        }`}
-                                >
-                                    <span className="text-base leading-none">{item.icon}</span>
-                                    <span>{item.label}</span>
-                                </button>
-                            ))}
-                        </nav>
-                    </div>
-                </div>
+                {/* Navigation Core List Blocks */}
+                <nav className="space-y-1">
+                    <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest px-2 mb-3">
+                        Management Core
+                    </span>
+                    {navItems.map((item) => {
+                        // Check if selected using module id prop OR matching URL pathname property
+                        const isSelected = activeModule === item.id || location.pathname === item.path;
+                        return (
+                            <button
+                                key={item.id}
+                                type="button"
+                                onClick={() => handleNavigation(item.id, item.path)}
+                                className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-bold transition-all duration-150 ${isSelected
+                                    ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/30 shadow-sm'
+                                    : 'text-gray-600 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-zinc-800/40 hover:text-gray-900 dark:hover:text-zinc-200 border border-transparent'
+                                    }`}
+                            >
+                                <span className="text-lg leading-none">{item.icon}</span>
+                                <span className="tracking-tight">{item.label}</span>
+                            </button>
+                        );
+                    })}
+                </nav>
             </div>
 
-            {/* Persistent Session Terminal Footer */}
-            <div className="pt-6 border-t border-slate-100">
-                <button
+            {/* Bottom Section: Profile Shortcut Card / Quick Logout Accent */}
+            <div className="pt-4 border-t border-gray-100 dark:border-zinc-800/80 mt-4 md:mt-0">
+                <div
                     onClick={handleLogout}
-                    className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200/60 text-slate-500 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-100 transition-all font-black text-[10px] uppercase tracking-widest shadow-xs active:scale-[0.98]"
+                    className="flex items-center justify-between p-3 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800/40 shadow-sm hover:bg-gray-100 dark:hover:bg-zinc-900 transition-all group cursor-pointer"
+                    title="Click to Logout"
                 >
-                    <span>Exit Account</span>
-                    <span className="text-sm">🚪</span>
-                </button>
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-full bg-indigo-700 flex items-center justify-center text-white text-xs font-black font-mono shadow-md shadow-indigo-100 dark:shadow-none">
+                            M
+                        </div>
+                        <div className="text-left">
+                            <span className="block text-xs font-black text-gray-900 dark:text-zinc-200 leading-none">Manager</span>
+                            <span className="text-[10px] text-gray-500 dark:text-zinc-400 font-bold uppercase tracking-tighter mt-0.5 block">HR Admin</span>
+                        </div>
+                    </div>
+                    <button
+                        type="button"
+                        className="p-1.5 rounded-lg text-gray-400 group-hover:text-red-600 dark:group-hover:text-red-400 group-hover:bg-red-50 dark:group-hover:bg-red-950/30 transition-all text-sm hover:shadow-sm"
+                        title="Secure Logout"
+                    >
+                        🚪
+                    </button>
+                </div>
             </div>
+
         </aside>
     );
 }

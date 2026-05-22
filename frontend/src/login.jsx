@@ -97,7 +97,7 @@ function AdminLogin({ onLoginStart, onLoginSuccess, onLoginError }) {
         <input
           type="email"
           placeholder="admin@company.com"
-          className={`${inputBaseStyles} focus:ring-fuchsia-700 focus:border-fuchsia-700`}
+          className={`${inputBaseStyles} focus:ring-indigo-700 focus:border-indigo-700`}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -108,7 +108,7 @@ function AdminLogin({ onLoginStart, onLoginSuccess, onLoginError }) {
         <input
           type="password"
           placeholder="••••••••••••"
-          className={`${inputBaseStyles} focus:ring-fuchsia-700 focus:border-fuchsia-700`}
+          className={`${inputBaseStyles} focus:ring-indigo-700 focus:border-indigo-700`}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
@@ -116,7 +116,7 @@ function AdminLogin({ onLoginStart, onLoginSuccess, onLoginError }) {
       </div>
 
       <div className="flex flex-col gap-3 pt-2">
-        <button className="w-full bg-fuchsia-800 hover:bg-fuchsia-900 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-fuchsia-50 transition-all active:scale-[0.98]" type="submit">
+        <button className="w-full bg-indigo-700 hover:bg-indigo-800 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-indigo-100 transition-all active:scale-[0.98]" type="submit">
           Login
         </button>
 
@@ -124,7 +124,7 @@ function AdminLogin({ onLoginStart, onLoginSuccess, onLoginError }) {
         <button
           type="button"
           onClick={() => navigate('/admin/signup')}
-          className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl transition-all text-xs uppercase tracking-wider border border-slate-200 shadow-sm"
+          className="w-full bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-bold py-3 rounded-xl transition-all text-xs uppercase tracking-wider border border-indigo-200 shadow-sm"
         >
           Create Admin Account (Sign Up) →
         </button>
@@ -167,7 +167,7 @@ function SuperAdminLogin({ onLoginStart, onLoginSuccess, onLoginError }) {
         <input
           type="email"
           placeholder="ceo@company.com"
-          className={`${inputBaseStyles} focus:ring-rose-700 focus:border-rose-700`}
+          className={`${inputBaseStyles} focus:ring-indigo-700 focus:border-indigo-700`}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -178,14 +178,14 @@ function SuperAdminLogin({ onLoginStart, onLoginSuccess, onLoginError }) {
         <input
           type="password"
           placeholder="••••••••••••••••"
-          className={`${inputBaseStyles} focus:ring-rose-700 focus:border-rose-700`}
+          className={`${inputBaseStyles} focus:ring-indigo-700 focus:border-indigo-700`}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
         />
       </div>
-      <button className="w-full bg-rose-700 hover:bg-rose-800 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-rose-100 transition-all active:scale-[0.98]" type="submit">
-        Super Admin Access
+      <button className="w-full bg-indigo-700 hover:bg-indigo-800 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-indigo-100 transition-all active:scale-[0.98]" type="submit">
+        Login
       </button>
     </form>
   );
@@ -203,8 +203,8 @@ export default function LoginGateway() {
 
   const accents = {
     employee: 'from-blue-700 to-indigo-800',
-    admin: 'from-fuchsia-800 to-purple-900',
-    superadmin: 'from-red-600 to-rose-800'
+    admin: 'from-blue-700 to-indigo-800',
+    superadmin: 'from-blue-700 to-indigo-800'
   };
 
   const titles = {

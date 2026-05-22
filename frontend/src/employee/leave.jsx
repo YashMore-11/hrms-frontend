@@ -76,16 +76,16 @@ export default function LeaveApplicationPage() {
     <div className="min-h-screen flex flex-col md:flex-row bg-white font-sans">
       
       {/* LOCKED VIEWPORT SIDEBAR */}
-      <div className="md:sticky md:top-0 md:h-screen z-20 flex-shrink-0 border-r border-slate-100">
+      <div className="md:sticky md:top-0 md:h-screen z-20 flex-shrink-0 border-r border-gray-100">
         <EmployeeSidebar activeModule="leave" />
       </div>
 
       <main className="flex-1 p-4 md:p-8 overflow-y-auto space-y-8">
         
         {/* Module Header */}
-        <div className="border-b border-slate-100 pb-6">
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight uppercase">Leave Management</h1>
-          <p className="text-sm text-slate-500 mt-1">Request time off and track your balances</p>
+        <div className="border-b border-gray-100 pb-6">
+          <h1 className="text-3xl font-black text-gray-900 tracking-tight uppercase">Leave Management</h1>
+          <p className="text-sm text-gray-500 mt-1">Request time off and track your balances</p>
         </div>
 
         {/* Leave Balances Cards */}
@@ -96,11 +96,11 @@ export default function LeaveApplicationPage() {
             { label: 'Earned Leave', value: balances.earned },
             { label: 'Paid Leave', value: balances.paid },
           ].map((item, idx) => (
-            <div key={idx} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-              <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{item.label}</span>
+            <div key={idx} className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
+              <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{item.label}</span>
               <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-black text-slate-900">{item.value}</span>
-                <span className="text-[10px] font-bold text-slate-400 uppercase">days</span>
+                <span className="text-2xl font-black text-gray-900">{item.value}</span>
+                <span className="text-[10px] font-bold text-gray-400 uppercase">days</span>
               </div>
             </div>
           ))}
@@ -109,19 +109,19 @@ export default function LeaveApplicationPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
           {/* Leave Application Form */}
-          <div className="lg:col-span-1 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4 h-fit">
-            <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-widest border-b border-slate-100 pb-3">
+          <div className="lg:col-span-1 bg-white p-6 rounded-3xl border border-gray-200 shadow-sm space-y-4 h-fit">
+            <h3 className="text-[11px] font-black text-gray-900 uppercase tracking-widest border-b border-gray-100 pb-3">
               New Leave Request
             </h3>
 
             <form onSubmit={handleSubmitLeave} className="space-y-4">
               <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Leave Category</label>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Leave Category</label>
                 <select 
                   value={leaveType}
                   onChange={(e) => setLeaveType(e.target.value)}
                   disabled={isLoading}
-                  className="w-full px-3 py-3 text-sm rounded-xl border border-slate-300 bg-slate-50 font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  className="w-full px-3 py-3 text-sm rounded-xl border border-gray-300 bg-gray-50 font-bold text-gray-800 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                 >
                   <option value="Casual Leave">Casual Leave</option>
                   <option value="Medical Leave">Medical Leave</option>
@@ -132,25 +132,25 @@ export default function LeaveApplicationPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Start Date</label>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Start Date</label>
                   <input 
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
                     required
                     disabled={isLoading}
-                    className="w-full px-3 py-2.5 text-sm rounded-xl border border-slate-300 font-bold bg-slate-50 focus:bg-white text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                    className="w-full px-3 py-2.5 text-sm rounded-xl border border-gray-300 font-bold bg-gray-50 focus:bg-white text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">End Date</label>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">End Date</label>
                   <input 
                     type="date"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
                     required
                     disabled={isLoading}
-                    className="w-full px-3 py-2.5 text-sm rounded-xl border border-slate-300 font-bold bg-slate-50 focus:bg-white text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                    className="w-full px-3 py-2.5 text-sm rounded-xl border border-gray-300 font-bold bg-gray-50 focus:bg-white text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                   />
                 </div>
               </div>
@@ -162,7 +162,7 @@ export default function LeaveApplicationPage() {
               )}
 
               <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Reason for Leave</label>
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Reason for Leave</label>
                 <textarea 
                   rows={4}
                   value={reason}
@@ -170,7 +170,7 @@ export default function LeaveApplicationPage() {
                   placeholder="Provide context..."
                   required
                   disabled={isLoading}
-                  className="w-full px-3 py-3 text-sm rounded-xl border border-slate-300 bg-slate-50 focus:bg-white font-bold text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  className="w-full px-3 py-3 text-sm rounded-xl border border-gray-300 bg-gray-50 focus:bg-white font-bold text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                 />
               </div>
 
@@ -185,27 +185,27 @@ export default function LeaveApplicationPage() {
           </div>
 
           {/* Leave History Table */}
-          <div className="lg:col-span-2 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div className="lg:col-span-2 bg-white p-6 rounded-3xl border border-gray-200 shadow-sm flex flex-col justify-between">
             <div className="space-y-4">
-              <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-widest border-b border-slate-100 pb-3">
+              <h3 className="text-[11px] font-black text-gray-900 uppercase tracking-widest border-b border-gray-100 pb-3">
                 My Leave History
               </h3>
 
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-[11px] uppercase tracking-tight">
                   <thead>
-                    <tr className="border-b border-slate-200 text-slate-400 font-black tracking-widest bg-slate-50">
+                    <tr className="border-b border-gray-200 text-gray-400 font-black tracking-widest bg-gray-50">
                       <th className="p-3">Leave Type</th>
                       <th className="p-3">Timeline</th>
                       <th className="p-3">Days</th>
                       <th className="p-3 text-right">Status</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 font-bold text-slate-700">
+                  <tbody className="divide-y divide-gray-100 font-bold text-gray-700">
                     {leaveHistory.map((log) => (
-                      <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="p-3 font-black text-slate-900">{log.type}</td>
-                        <td className="p-3 text-slate-400 font-mono text-[10px]">{log.startDate} - {log.endDate}</td>
+                      <tr key={log.id} className="hover:bg-gray-50/50 transition-colors">
+                        <td className="p-3 font-black text-gray-900">{log.type}</td>
+                        <td className="p-3 text-gray-400 font-mono text-[10px]">{log.startDate} - {log.endDate}</td>
                         <td className="p-3 font-mono font-black">{log.days}D</td>
                         <td className="p-3 text-right">
                           <span className={`inline-flex items-center px-3 py-1 rounded-full text-[9px] font-black border uppercase tracking-widest shadow-sm ${
@@ -223,7 +223,7 @@ export default function LeaveApplicationPage() {
               </div>
             </div>
 
-            <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest text-center pt-6 border-t border-slate-100 mt-4">
+            <div className="text-[10px] text-gray-400 font-black uppercase tracking-widest text-center pt-6 border-t border-gray-100 mt-4">
               Requests are routed to HR for verified approval
             </div>
           </div>

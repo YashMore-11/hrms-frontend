@@ -73,13 +73,13 @@ export default function LeaveAcceptance() {
             <main className="flex-1 p-4 md:p-8 overflow-y-auto space-y-8">
 
                 {/* Module Description Header */}
-                <div className="border-b border-slate-100 pb-6">
-                    <h1 className="text-3xl font-black text-slate-900 tracking-tight uppercase">Leave Desk Review</h1>
-                    <p className="text-sm text-slate-500 mt-1">Audit administrative time-off requests, cross-reference department capacities, and approve balances</p>
+                <div className="border-b border-gray-100 pb-6">
+                    <h1 className="text-3xl font-black text-gray-900 tracking-tight uppercase">Leave Desk Review</h1>
+                    <p className="text-sm text-gray-500 mt-1">Audit administrative time-off requests, cross-reference department capacities, and approve balances</p>
                 </div>
 
                 {isLoading ? (
-                    <div className="p-12 text-center text-xs font-black text-slate-400 uppercase tracking-widest animate-pulse">
+                    <div className="p-12 text-center text-xs font-black text-gray-400 uppercase tracking-widest animate-pulse">
                         Retrieving operational leave logs...
                     </div>
                 ) : (
@@ -87,33 +87,33 @@ export default function LeaveAcceptance() {
 
                         {/* Analytical Leave Counter Widgets */}
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                            <div className="p-5 bg-white border border-slate-200 rounded-2xl shadow-sm">
+                            <div className="p-5 bg-white border border-gray-200 rounded-2xl shadow-sm">
                                 <span className="block text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1">Awaiting Attention</span>
                                 <span className="text-3xl font-black text-amber-600 block">{metrics.pendingCount} Requests</span>
-                                <span className="block text-[10px] text-slate-400 font-bold mt-1 uppercase">Awaiting Action Verdicts</span>
+                                <span className="block text-[10px] text-gray-400 font-bold mt-1 uppercase">Awaiting Action Verdicts</span>
                             </div>
-                            <div className="p-5 bg-white border border-slate-200 rounded-2xl shadow-sm">
+                            <div className="p-5 bg-white border border-gray-200 rounded-2xl shadow-sm">
                                 <span className="block text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Approved Leaves</span>
                                 <span className="text-3xl font-black text-emerald-600 block">{metrics.approvedCount} Settled</span>
-                                <span className="block text-[10px] text-slate-400 font-bold mt-1 uppercase">Authorized Absence Clearances</span>
+                                <span className="block text-[10px] text-gray-400 font-bold mt-1 uppercase">Authorized Absence Clearances</span>
                             </div>
-                            <div className="p-5 bg-white border border-slate-200 rounded-2xl shadow-sm">
+                            <div className="p-5 bg-white border border-gray-200 rounded-2xl shadow-sm">
                                 <span className="block text-[10px] font-black text-rose-600 uppercase tracking-widest mb-1">Rejected Applications</span>
                                 <span className="text-3xl font-black text-rose-600 block">{metrics.rejectedCount} Voided</span>
-                                <span className="block text-[10px] text-slate-400 font-bold mt-1 uppercase">Declined Workspace Absence Logs</span>
+                                <span className="block text-[10px] text-gray-400 font-bold mt-1 uppercase">Declined Workspace Absence Logs</span>
                             </div>
                         </div>
 
                         {/* Filter Status Panel */}
-                        <div className="flex gap-2 p-1.5 bg-slate-50 rounded-xl border border-slate-100 w-fit">
+                        <div className="flex gap-2 p-1.5 bg-gray-50 rounded-xl border border-gray-100 w-fit">
                             {['All', 'Pending', 'Approved', 'Rejected'].map((status) => (
                                 <button
                                     key={status}
                                     type="button"
                                     onClick={() => setFilterStatus(status)}
                                     className={`px-4 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all ${filterStatus === status
-                                            ? 'bg-white text-fuchsia-800 border border-slate-200/60 shadow-xs'
-                                            : 'text-slate-500 hover:text-slate-900'
+                                            ? 'bg-white text-indigo-800 border border-gray-200/60 shadow-xs'
+                                            : 'text-gray-500 hover:text-gray-900'
                                         }`}
                                 >
                                     {status}
@@ -122,16 +122,16 @@ export default function LeaveAcceptance() {
                         </div>
 
                         {/* Principal Leave Processing Matrix */}
-                        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div className="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden">
                             {filteredRequests.length === 0 ? (
-                                <div className="p-12 text-center text-xs font-black text-slate-400 uppercase tracking-widest">
+                                <div className="p-12 text-center text-xs font-black text-gray-400 uppercase tracking-widest">
                                     No absence logs matched your current status filters.
                                 </div>
                             ) : (
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left text-[11px] uppercase tracking-tight">
                                         <thead>
-                                            <tr className="border-b border-slate-200 text-slate-400 font-black tracking-widest bg-slate-50">
+                                            <tr className="border-b border-gray-200 text-gray-400 font-black tracking-widest bg-gray-50">
                                                 <th className="p-4">Personnel Profile</th>
                                                 <th className="p-4">Leave Class</th>
                                                 <th className="p-4">Timeline Span</th>
@@ -141,17 +141,17 @@ export default function LeaveAcceptance() {
                                                 <th className="p-4 text-right">Review Action Trigger</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-slate-100 font-bold text-slate-700">
+                                        <tbody className="divide-y divide-gray-100 font-bold text-gray-700">
                                             {filteredRequests.map((req) => (
-                                                <tr key={req.id} className="hover:bg-slate-50/50 transition-colors">
+                                                <tr key={req.id} className="hover:bg-gray-50/50 transition-colors">
                                                     <td className="p-4 space-y-0.5">
-                                                        <span className="block font-black text-slate-900 normal-case text-xs">{req.name}</span>
-                                                        <span className="block font-mono text-[10px] text-slate-400">{req.empId} ({req.department})</span>
+                                                        <span className="block font-black text-gray-900 normal-case text-xs">{req.name}</span>
+                                                        <span className="block font-mono text-[10px] text-gray-400">{req.empId} ({req.department})</span>
                                                     </td>
-                                                    <td className="p-4 font-black text-slate-800">{req.type}</td>
-                                                    <td className="p-4 font-mono text-slate-400 text-[10px]">{req.timeline}</td>
-                                                    <td className="p-4 font-mono font-black text-slate-900">{req.days} Days</td>
-                                                    <td className="p-4 text-slate-500 normal-case font-medium max-w-xs truncate" title={req.reason}>
+                                                    <td className="p-4 font-black text-gray-800">{req.type}</td>
+                                                    <td className="p-4 font-mono text-gray-400 text-[10px]">{req.timeline}</td>
+                                                    <td className="p-4 font-mono font-black text-gray-900">{req.days} Days</td>
+                                                    <td className="p-4 text-gray-500 normal-case font-medium max-w-xs truncate" title={req.reason}>
                                                         {req.reason}
                                                     </td>
                                                     <td className="p-4">
@@ -181,7 +181,7 @@ export default function LeaveAcceptance() {
                                                                 </button>
                                                             </div>
                                                         ) : (
-                                                            <span className="text-[10px] font-black font-mono text-slate-300 tracking-widest uppercase px-3 py-1 bg-slate-50 border border-slate-100 rounded-lg">
+                                                            <span className="text-[10px] font-black font-mono text-gray-300 tracking-widest uppercase px-3 py-1 bg-gray-50 border border-gray-100 rounded-lg">
                                                                 Locked
                                                             </span>
                                                         )}

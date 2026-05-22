@@ -50,7 +50,6 @@ const AdminSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-
   selectedPlanName: {
     type: String,
     default: 'None',
@@ -62,6 +61,27 @@ const AdminSchema = new mongoose.Schema({
     trim: true
   },
 
+  
+  gstId: {
+    type: String,
+    default: '',
+    trim: true,
+    uppercase: true
+  },
+  companySizeRange: {
+    type: String,
+    default: '1-10',
+    trim: true
+  },
+
+  // Tracks custom system configurations pools
+  customDepartments: [
+    { type: String, trim: true }
+  ],
+  customRoles: [
+    { type: String, trim: true, lowercase: true }
+  ],
+
   Employee: [
     { type: mongoose.Schema.Types.ObjectId, ref: "Employee" }
   ]
@@ -69,4 +89,4 @@ const AdminSchema = new mongoose.Schema({
   timestamps: true
 });
 
-module.exports = mongoose.model('Admin', AdminSchema);
+module.exports = mongoose.models.Admin || mongoose.model('Admin', AdminSchema);

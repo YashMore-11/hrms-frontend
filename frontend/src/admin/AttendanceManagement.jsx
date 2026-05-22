@@ -93,13 +93,13 @@ export default function AttendanceManagement() {
             <main className="flex-1 p-4 md:p-8 overflow-y-auto space-y-8">
 
                 {/* Section Header */}
-                <div className="border-b border-slate-100 pb-6">
-                    <h1 className="text-3xl font-black text-slate-900 tracking-tight uppercase">Staff Attendance Ledger</h1>
-                    <p className="text-sm text-slate-500 mt-1">Audit shifting metrics, monitor punch cards, track tardiness, and evaluate workspace activity timelines</p>
+                <div className="border-b border-gray-100 pb-6">
+                    <h1 className="text-3xl font-black text-gray-900 tracking-tight uppercase">Staff Attendance Ledger</h1>
+                    <p className="text-sm text-gray-500 mt-1">Audit shifting metrics, monitor punch cards, track tardiness, and evaluate workspace activity timelines</p>
                 </div>
 
                 {isLoading ? (
-                    <div className="p-12 text-center text-xs font-black text-slate-400 uppercase tracking-widest animate-pulse">
+                    <div className="p-12 text-center text-xs font-black text-gray-400 uppercase tracking-widest animate-pulse">
                         Parsing active terminal punch clocks...
                     </div>
                 ) : (
@@ -107,22 +107,22 @@ export default function AttendanceManagement() {
 
                         {/* Analytical Status Counter Scorecards */}
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                                <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Active Roster</span>
-                                <span className="text-3xl font-black text-slate-900 block">{stats.activeHeadcount}</span>
-                                <span className="block text-[10px] text-slate-400 font-bold mt-1 uppercase">Tracked Profiles</span>
+                            <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
+                                <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Active Roster</span>
+                                <span className="text-3xl font-black text-gray-900 block">{stats.activeHeadcount}</span>
+                                <span className="block text-[10px] text-gray-400 font-bold mt-1 uppercase">Tracked Profiles</span>
                             </div>
-                            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                            <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
                                 <span className="block text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">On Time Status</span>
                                 <span className="text-3xl font-black text-emerald-600 block">{stats.totalPresent}</span>
                                 <span className="block text-[10px] text-emerald-400 font-bold mt-1 uppercase">Standard Present Clocks</span>
                             </div>
-                            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                            <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
                                 <span className="block text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1">Tardy Clocks / Late</span>
                                 <span className="text-3xl font-black text-amber-600 block">{stats.totalLate}</span>
                                 <span className="block text-[10px] text-amber-400 font-bold mt-1 uppercase">Grace Period Infractions</span>
                             </div>
-                            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                            <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
                                 <span className="block text-[10px] font-black text-rose-600 uppercase tracking-widest mb-1">Unreported Absences</span>
                                 <span className="text-3xl font-black text-rose-600 block">{stats.totalAbsent}</span>
                                 <span className="block text-[10px] text-rose-400 font-bold mt-1 uppercase">Missing Check In Indexes</span>
@@ -130,18 +130,18 @@ export default function AttendanceManagement() {
                         </div>
 
                         {/* Search and Dropdown Filter Panels */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-100">
                             <input
                                 type="text"
                                 placeholder="Filter by name or worker ID reference..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="px-4 py-2.5 text-xs font-bold rounded-xl border border-slate-200 bg-white placeholder-slate-400 focus:ring-2 focus:ring-fuchsia-600 outline-none transition-all text-slate-800"
+                                className="px-4 py-2.5 text-xs font-bold rounded-xl border border-gray-200 bg-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-600 outline-none transition-all text-gray-800"
                             />
                             <select
                                 value={filterStatus}
                                 onChange={(e) => setFilterStatus(e.target.value)}
-                                className="px-4 py-2.5 text-xs font-bold rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-fuchsia-600 outline-none text-slate-700 font-bold"
+                                className="px-4 py-2.5 text-xs font-bold rounded-xl border border-gray-200 bg-white focus:ring-2 focus:ring-indigo-600 outline-none text-gray-700 font-bold"
                             >
                                 <option value="All">All Attendance Statuses</option>
                                 <option value="Present">Present (On-Time)</option>
@@ -151,7 +151,7 @@ export default function AttendanceManagement() {
                             <select
                                 value={filterDept}
                                 onChange={(e) => setFilterDept(e.target.value)}
-                                className="px-4 py-2.5 text-xs font-bold rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-fuchsia-600 outline-none text-slate-700 font-bold"
+                                className="px-4 py-2.5 text-xs font-bold rounded-xl border border-gray-200 bg-white focus:ring-2 focus:ring-indigo-600 outline-none text-gray-700 font-bold"
                             >
                                 <option value="All">All Department Wings</option>
                                 <option value="Engineer">Engineering / Development</option>
@@ -161,16 +161,16 @@ export default function AttendanceManagement() {
                         </div>
 
                         {/* Primary Log Grid Sheet */}
-                        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div className="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden">
                             {filteredRecords.length === 0 ? (
-                                <div className="p-12 text-center text-xs font-black text-slate-400 uppercase tracking-widest">
+                                <div className="p-12 text-center text-xs font-black text-gray-400 uppercase tracking-widest">
                                     No personnel presence indices matched your filter targets.
                                 </div>
                             ) : (
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left text-[11px] uppercase tracking-tight">
                                         <thead>
-                                            <tr className="border-b border-slate-200 text-slate-400 font-black tracking-widest bg-slate-50">
+                                            <tr className="border-b border-gray-200 text-gray-400 font-black tracking-widest bg-gray-50">
                                                 <th className="p-4">Staff Ref</th>
                                                 <th className="p-4">Full Employee Identity</th>
                                                 <th className="p-4">Department Division</th>
@@ -179,14 +179,14 @@ export default function AttendanceManagement() {
                                                 <th className="p-4 text-right">Activity Status</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-slate-100 font-bold text-slate-700">
+                                        <tbody className="divide-y divide-gray-100 font-bold text-gray-700">
                                             {filteredRecords.map((rec) => (
-                                                <tr key={rec.empId} className="hover:bg-slate-50/50 transition-colors">
-                                                    <td className="p-4 font-mono font-black text-slate-900">{rec.empId}</td>
-                                                    <td className="p-4 text-slate-900 text-sm normal-case font-bold">{rec.name}</td>
-                                                    <td className="p-4 text-slate-500 normal-case">{rec.department || 'General Operations'}</td>
-                                                    <td className="p-4 font-mono text-slate-800 tracking-tight">{rec.checkIn}</td>
-                                                    <td className="p-4 font-mono text-slate-400 tracking-tight">{rec.checkOut}</td>
+                                                <tr key={rec.empId} className="hover:bg-gray-50/50 transition-colors">
+                                                    <td className="p-4 font-mono font-black text-gray-900">{rec.empId}</td>
+                                                    <td className="p-4 text-gray-900 text-sm normal-case font-bold">{rec.name}</td>
+                                                    <td className="p-4 text-gray-500 normal-case">{rec.department || 'General Operations'}</td>
+                                                    <td className="p-4 font-mono text-gray-800 tracking-tight">{rec.checkIn}</td>
+                                                    <td className="p-4 font-mono text-gray-400 tracking-tight">{rec.checkOut}</td>
                                                     <td className="p-4 text-right">
                                                         <span className={`inline-flex items-center px-3 py-1 text-[9px] font-black border rounded-lg tracking-wider ${rec.status === 'Present' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
                                                                 rec.status === 'Late' ? 'bg-amber-50 text-amber-700 border-amber-100' :

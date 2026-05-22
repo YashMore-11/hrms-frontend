@@ -3,16 +3,18 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-// Import your separate collection models
+// Import centralized database module models
 const Superadmin = require('../models/Superadmin');
 const Admin = require('../models/Admin');
 const Employee = require('../models/Employee');
 
-// ✅ FIXED: Hardened fallback string matching your exact configuration keys perfectly
+// Import separated secure gatekeeper verification middleware
+const verifyToken = require('../middleware/auth');
+
 const JWT_SECRET = process.env.JWT_SECRET || "HRMS_SUPER_SECRET_KEY@_123";
 
 // ==========================================
-// 🚀 AUTOMATED SUPERADMIN SEED ENGINE (Runs on File Init)
+// 🚀 AUTOMATED SUPERADMIN SEED ENGINE
 // ==========================================
 (async () => {
   try {
@@ -20,15 +22,13 @@ const JWT_SECRET = process.env.JWT_SECRET || "HRMS_SUPER_SECRET_KEY@_123";
     if (!rootExist) {
       const salt = await bcrypt.genSalt(10);
       const standardHashedPassword = await bcrypt.hash("supersecretpassword", salt);
-
       const defaultRoot = new Superadmin({
         name: "Global CEO Root",
         email: "ceo@company.com",
-        password: standardHashedPassword,
-        admin: []
+        password: standardHashedPassword
       });
       await defaultRoot.save();
-      console.log("📍 [System Seed]: Superadmin credentials safely verified/inserted into database collection.");
+      console.log("📍 [System Seed]: Superadmin credentials verified.");
     }
   } catch (err) {
     console.error("System Seeder failed:", err.message);
@@ -36,191 +36,201 @@ const JWT_SECRET = process.env.JWT_SECRET || "HRMS_SUPER_SECRET_KEY@_123";
 })();
 
 // ==========================================
-// 1. UNIVERSAL LOGIN ROUTE (For all roles)
+// 🚀 SECURE ADMINISTRATIVE INITIAL SIGNUP
 // ==========================================
-router.post('/login', async (req, res) => {
-  // ✅ Applied explicit sanitization to drop formatting spaces added by client environments
-  const email = req.body.email ? req.body.email.trim().toLowerCase() : "";
-  const password = req.body.password ? req.body.password.trim() : "";
-  const { role } = req.body;
+// Path: POST http://localhost:5000/api/auth/register-admin
+router.post('/register-admin', async (req, res) => {
+  const {
+    adminId, name, email, password, companyName,
+    companyStartDate, branchLocation, phone, employeeQuotaTarget,
+    selectedPlanName, planPrice,
+    panId, gstId
+  } = req.body;
 
-  if (!email || !password || !role) {
-    return res.status(400).json({ message: "Parameters missing: email, password, and role required." });
+  // Enforce strict parameter presence validation checks across compliance properties
+  if (!email || !password || !companyName || !name || !phone || !panId || !gstId) {
+    return res.status(400).json({ message: "Parameters missing: All corporate details and verified compliance fields (PAN/GST) are required." });
   }
 
   try {
-    let user = null;
+    // 1. Enforce unique constraints across the Admin database collection
+    const existingAdmin = await Admin.findOne({ email: email.trim().toLowerCase() });
+    if (existingAdmin) {
+      return res.status(400).json({ message: "An administrator account with this email already exists." });
+    }
 
-    // Direct the query to look inside the correct database collection table
-    if (role === 'superadmin') {
+    // 2. Encrypt the raw administrative account password string securely
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password.trim(), salt);
+
+    // 3. Build the Mongoose document using the verified data
+    const newAdmin = new Admin({
+      adminId,
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      password: hashedPassword,
+      companyName: companyName.trim(),
+      companyStartDate: companyStartDate ? new Date(companyStartDate) : new Date(),
+      branchLocation: branchLocation.trim(),
+      phone: phone.trim(),
+      panId: panId.trim().toUpperCase(),
+      gstId: gstId.trim().toUpperCase(),
+      employeeQuotaTarget: Number(employeeQuotaTarget) || 10,
+      hasPaidTier: true,
+      selectedPlanName: selectedPlanName || 'None',
+      planPrice: planPrice || '0'
+    });
+
+    await newAdmin.save();
+
+    res.status(201).json({
+      message: "Administrative profile ledger instantiated successfully.",
+      adminId: newAdmin.adminId
+    });
+
+  } catch (err) {
+    console.error("Critical error in Admin registration:", err);
+    res.status(500).json({ message: "Internal server error instantiating administrative database profile." });
+  }
+});
+
+// ==========================================
+// 🔐 SEPARATED LOGIN CONTROLLER FUNCTION
+// ==========================================
+/**
+ * Processes authentication against a single specified collection boundary.
+ * Returns user document and verified role string, or throws an error.
+ */
+async function authenticateUserByPortal(email, password, portalRole) {
+  let user = null;
+  let resolvedRole = portalRole;
+
+  switch (portalRole) {
+    case 'superadmin':
       user = await Superadmin.findOne({ email });
-    } else if (role === 'admin') {
+      break;
+
+    case 'admin':
       user = await Admin.findOne({ email });
-
-      // PAYMENT GATEKEEPER CHECK: Drop authentication if payment setup was incomplete or bypassed
       if (user && !user.hasPaidTier) {
-        return res.status(402).json({
-          message: "Account activation incomplete. Please complete your business plan checkout to gain platform access."
-        });
+        const err = new Error("Account activation incomplete. Paid tier activation required.");
+        err.statusCode = 402;
+        throw err;
       }
-    } else if (role === 'employee' || role === 'hr') {
+      break;
+
+    case 'employee':
+      // Searches the employee collection exclusively—Admin accounts are completely unreachable here
       user = await Employee.findOne({ email });
-
-      // Safety Check: Avoid role privilege escalations if an employee tries using the HR layout context
-      if (user && role === 'hr' && user.role !== 'hr') {
-        return res.status(403).json({ message: "Access Denied: You are not registered as an HR Manager" });
+      if (user) {
+        // Dynamically shift 'employee' string token to 'hr' if database record states it
+        resolvedRole = user.role ? user.role.toLowerCase() : "employee";
       }
-    }
+      break;
 
-    // If no record exists for that email in the selected table
-    if (!user) {
-      return res.status(400).json({ message: "Invalid email or credentials" });
-    }
+    default:
+      const err = new Error("Invalid system role parameter submitted.");
+      err.statusCode = 400;
+      throw err;
+  }
 
-    // Verify password match using bcrypt
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: "Invalid email or credentials" });
-    }
+  if (!user) {
+    const err = new Error(`Access Denied: No account found matching this email under the ${portalRole.toUpperCase()} category.`);
+    err.statusCode = 400;
+    throw err;
+  }
 
-    // Determine return role (fallback to requested role configuration parameter if user.role is unset)
-    const activeRole = user.role || role;
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    const err = new Error("Invalid credentials: Password verification mismatch.");
+    err.statusCode = 400;
+    throw err;
+  }
 
-    // Generate a secure token containing the user's Mongo ID and verified role context
+  return { user, resolvedRole };
+}
+
+// ==========================================
+// 🛣️ STRICT ROUTE HANDLER FOR PORTAL AUTH
+// ==========================================
+// Path: POST http://localhost:5000/api/auth/login
+router.post('/login', async (req, res) => {
+  const email = req.body.email ? req.body.email.trim().toLowerCase() : "";
+  const password = req.body.password ? req.body.password.trim() : "";
+  const role = req.body.role ? req.body.role.trim().toLowerCase() : "";
+
+  if (!email || !password || !role) {
+    return res.status(400).json({ message: "Parameters missing: email, password, and role are required." });
+  }
+
+  try {
+    // Execute our separated validation controller engine block
+    const { user, resolvedRole } = await authenticateUserByPortal(email, password, role);
+
+    // Generate secure token tracking keys
     const token = jwt.sign(
-      { id: user._id, role: activeRole },
+      { id: user._id, role: resolvedRole },
       JWT_SECRET,
-      { expiresIn: '1d' } // Token expires in 24 hours
+      { expiresIn: '1d' }
     );
 
-    // Send the pass token and payload variables back to your frontend localStorage handler
-    res.json({
+    res.status(200).json({
       message: "Login successful",
       token,
-      role: activeRole,
+      role: resolvedRole,
       name: user.name,
       email: user.email
     });
 
   } catch (err) {
-    console.error("Authentication Error:", err);
-    res.status(500).json({ message: "Server error during authentication" });
+    // Check if the error thrown by the controller has an explicit customized status code
+    const status = err.statusCode || 500;
+    const message = status === 500 ? "Server error during authentication processing loop." : err.message;
+
+    if (status === 500) console.error("Server Login Exception Fault:", err);
+    res.status(status).json({ message });
   }
 });
 
 // ==========================================
-// 2. ADMIN REGISTRATION & PLAN CHECKOUT ROUTE
+// 👤 PROFILE LAYER RECOVERY STORAGE CHANNELS
 // ==========================================
-router.post('/create-admin', async (req, res) => {
-  const {
-    adminId,
-    name,
-    email,
-    password,
-    phone,
-    companyName,
-    companyStartDate,
-    branchLocation,
-    employeeQuotaTarget,
-    selectedPlanName,
-    planPrice,
-    hasPaidTier
-  } = req.body;
-
+// Path: GET http://localhost:5000/api/auth/admin-profile
+router.get('/admin-profile', verifyToken, async (req, res) => {
   try {
-    let existingAdmin = await Admin.findOne({ email: email.trim().toLowerCase() });
-    if (existingAdmin) {
-      return res.status(400).json({ message: "An Admin with this email already exists" });
-    }
-
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password.trim(), salt);
-
-    const newAdmin = new Admin({
-      adminId,
-      name,
-      email: email.trim().toLowerCase(),
-      password: hashedPassword,
-      phone,
-      companyName,
-      companyStartDate,
-      branchLocation,
-      employeeQuotaTarget: Number(employeeQuotaTarget) || 0,
-      hasPaidTier: hasPaidTier || false,
-      selectedPlanName: selectedPlanName || 'None',
-      planPrice: planPrice || '0',
-      Employee: []
-    });
-
-    await newAdmin.save();
-
-    const token = jwt.sign(
-      { id: newAdmin._id, role: 'admin' },
-      JWT_SECRET,
-      { expiresIn: '1d' }
-    );
-
-    res.status(201).json({
-      message: "Admin account initialized and corporate workspace activated!",
-      token,
-      role: 'admin'
-    });
-
+    const admin = await Admin.findById(req.user.id).select('-password');
+    if (!admin) return res.status(404).json({ message: "Profile record not found." });
+    res.status(200).json(admin);
   } catch (err) {
-    console.error("Error creating Admin profile:", err);
-    res.status(500).json({ message: "Server error creating Admin profile" });
+    res.status(500).json({ message: err.message });
   }
 });
 
-// ==========================================
-// 3. ADMIN CREATES EMPLOYEE / HR ROUTE
-// ==========================================
-router.post('/create-employee', async (req, res) => {
-  const {
-    empId,
-    name,
-    gender,
-    age,
-    email,
-    password,
-    role,
-    department,
-    phone,
-    address,
-    previousCompany,
-    yearsOfExperience
-  } = req.body;
-
+// Path: PUT http://localhost:5000/api/auth/admin-profile
+// ✅ FIXED: Now captures, validates, and updates panId and gstId fields in the DB
+router.put('/admin-profile', verifyToken, async (req, res) => {
+  const { name, companyName, branchLocation, phone, panId, gstId, companySizeRange } = req.body;
   try {
-    let existingEmployee = await Employee.findOne({ email: email.trim().toLowerCase() });
-    if (existingEmployee) {
-      return res.status(400).json({ message: "A worker with this email already exists" });
-    }
+    const updatedAdmin = await Admin.findByIdAndUpdate(
+      req.user.id,
+      {
+        $set: {
+          name,
+          companyName,
+          branchLocation,
+          phone,
+          panId: panId ? panId.trim().toUpperCase() : "",
+          gstId: gstId ? gstId.trim().toUpperCase() : "",
+          companySizeRange
+        }
+      },
+      { returnDocument: 'after', runValidators: true }
+    ).select('-password');
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password.trim(), salt);
-
-    const newWorker = new Employee({
-      empId,
-      name,
-      gender: gender || 'Male',
-      age: Number(age) || 0,
-      email: email.trim().toLowerCase(),
-      password: hashedPassword,
-      role,
-      department,
-      phone,
-      address,
-      previousCompany: previousCompany || 'None',
-      yearsOfExperience: yearsOfExperience || '0 Years'
-    });
-
-    await newWorker.save();
-    res.status(201).json({ message: `${role.toUpperCase()} account created successfully!` });
-
+    if (!updatedAdmin) return res.status(404).json({ message: "Admin workspace missing." });
+    res.status(200).json(updatedAdmin);
   } catch (err) {
-    console.error("Error creating personnel entry:", err);
-    res.status(500).json({ message: "Server error creating personnel file" });
+    res.status(500).json({ message: err.message });
   }
 });
 

@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 export default function UpgradePlan() {
     const navigate = useNavigate();
 
-    // 1. PURE ENTERPRISE DATA ARRAY MATRIX
     const businessPlans = [
         {
             name: "1 month Go",
@@ -32,18 +31,48 @@ export default function UpgradePlan() {
         }
     ];
 
-    const handleProcessCheckout = (planName, amount) => {
-        alert(`💳 Redirecting to secure gate terminal...\nProcessing monthly authorization for: ${planName} (₹${amount})`);
+    // ✅ FIXED: Now performs an asynchronous network commit to MongoDB
+    const handleProcessCheckout = async (planName, amount) => {
+        // Retrieve temporary signup profile details cached inside client local storage
+        const rawCachedData = localStorage.getItem('pendingAdminData');
 
-        // Commit active premium flags cleanly to your local browser storage engine
-        localStorage.setItem('hasPaidTier', 'true');
-        navigate('/admin/dashboard');
+        if (!rawCachedData) {
+            alert("⚠️ Registration session expired. Please return to the Signup page and fill out the form again.");
+            navigate('/admin/signup');
+            return;
+        }
+
+        const pendingPayload = JSON.parse(rawCachedData);
+
+        try {
+            // Commit user fields to database cluster directly
+            const res = await fetch('http://localhost:5000/api/auth/register-admin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(pendingPayload)
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) throw new Error(data.message || "Failed to finalize corporate registration.");
+
+            alert(`🎉 Success! Account created for ${pendingPayload.companyName}.\nPlan: ${planName} (₹${amount})`);
+
+            // Safe memory teardown cleanup operations
+            localStorage.removeItem('pendingAdminData');
+            localStorage.setItem('hasPaidTier', 'true');
+
+            // Redirect smoothly to your unified Login gateway view node
+            navigate('/');
+
+        } catch (err) {
+            alert(`❌ Registration Failure: ${err.message}`);
+            console.error(err);
+        }
     };
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-zinc-950 p-4 md:p-8 font-sans text-white select-none">
-
-            {/* Absolute Header Navigation Target Escape Anchor */}
             <button
                 type="button"
                 onClick={() => navigate('/admin/signup')}
@@ -53,14 +82,11 @@ export default function UpgradePlan() {
             </button>
 
             <div className="w-full max-w-5xl space-y-8 animate-fadeIn">
-
-                {/* Header Summary (Simplified: Switchers Removed) */}
                 <div className="text-center space-y-2">
                     <h1 className="text-3xl md:text-4xl font-black tracking-tight text-zinc-100">Select Business Plan</h1>
                     <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Enterprise infrastructure tiers scaled for operational management</p>
                 </div>
 
-                {/* Corporate Pricing Grid Row */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
                     {businessPlans.map((plan, idx) => (
                         <div
@@ -102,7 +128,6 @@ export default function UpgradePlan() {
                         </div>
                     ))}
                 </div>
-
             </div>
         </div>
     );

@@ -107,15 +107,15 @@ export default function SalaryManagement() {
             <main className="flex-1 p-4 md:p-8 overflow-y-auto space-y-8">
 
                 {/* Section Header */}
-                <div className="border-b border-slate-100 pb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="border-b border-gray-100 pb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-3xl font-black text-slate-900 tracking-tight uppercase">Payroll Hub Ledger</h1>
-                        <p className="text-sm text-slate-500 mt-1">Authorize salary packages, disburse payouts, and track cross-departmental operations</p>
+                        <h1 className="text-3xl font-black text-gray-900 tracking-tight uppercase">Payroll Hub Ledger</h1>
+                        <p className="text-sm text-gray-500 mt-1">Authorize salary packages, disburse payouts, and track cross-departmental operations</p>
                     </div>
                 </div>
 
                 {isLoading ? (
-                    <div className="p-12 text-center text-xs font-black text-slate-400 uppercase tracking-widest animate-pulse">
+                    <div className="p-12 text-center text-xs font-black text-gray-400 uppercase tracking-widest animate-pulse">
                         Parsing enterprise financial ledgers...
                     </div>
                 ) : (
@@ -123,17 +123,17 @@ export default function SalaryManagement() {
 
                         {/* Financial Analytics Summary Scorecards */}
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                            <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-sm">
-                                <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Payroll Budget Allocation</span>
-                                <span className="text-2xl font-black text-slate-900 block">₹{(payrollStats.totalDisbursed + payrollStats.pendingPayouts).toLocaleString()}</span>
-                                <span className="block text-[10px] font-bold text-slate-400 mt-1 uppercase">Cumulative Branch Liability</span>
+                            <div className="p-6 bg-white border border-gray-200 rounded-3xl shadow-sm">
+                                <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Payroll Budget Allocation</span>
+                                <span className="text-2xl font-black text-gray-900 block">₹{(payrollStats.totalDisbursed + payrollStats.pendingPayouts).toLocaleString()}</span>
+                                <span className="block text-[10px] font-bold text-gray-400 mt-1 uppercase">Cumulative Branch Liability</span>
                             </div>
-                            <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-sm">
+                            <div className="p-6 bg-white border border-gray-200 rounded-3xl shadow-sm">
                                 <span className="block text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Disbursed Volume (Current Month)</span>
                                 <span className="text-2xl font-black text-emerald-600 block">Hex ₹{payrollStats.totalDisbursed.toLocaleString()}</span>
                                 <span className="block text-[10px] font-bold text-emerald-400 mt-1 uppercase">Committed Settlement Indices</span>
                             </div>
-                            <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-sm">
+                            <div className="p-6 bg-white border border-gray-200 rounded-3xl shadow-sm">
                                 <span className="block text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1">Outstanding Pending Pipeline</span>
                                 <span className="text-2xl font-black text-amber-600 block">₹{payrollStats.pendingPayouts.toLocaleString()}</span>
                                 <span className="block text-[10px] font-bold text-amber-400 mt-1 uppercase">Awaiting Exec Verdicts</span>
@@ -141,18 +141,18 @@ export default function SalaryManagement() {
                         </div>
 
                         {/* Search Filtration Control Interface */}
-                        <div className="flex flex-col sm:flex-row gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                        <div className="flex flex-col sm:flex-row gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-100">
                             <input
                                 type="text"
                                 placeholder="Search by name or Employee ID..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="flex-1 px-4 py-2.5 text-xs font-bold rounded-xl border border-slate-200 bg-white placeholder-slate-400 focus:ring-2 focus:ring-fuchsia-600 outline-none transition-all text-slate-800"
+                                className="flex-1 px-4 py-2.5 text-xs font-bold rounded-xl border border-gray-200 bg-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-600 outline-none transition-all text-gray-800"
                             />
                             <select
                                 value={filterDept}
                                 onChange={(e) => setFilterDept(e.target.value)}
-                                className="px-4 py-2.5 text-xs font-bold rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-fuchsia-600 outline-none text-slate-700"
+                                className="px-4 py-2.5 text-xs font-bold rounded-xl border border-gray-200 bg-white focus:ring-2 focus:ring-indigo-600 outline-none text-gray-700"
                             >
                                 <option value="All">All Departments</option>
                                 <option value="Engineer">Engineering / Tech</option>
@@ -162,16 +162,16 @@ export default function SalaryManagement() {
                         </div>
 
                         {/* Principal Payroll Data Grid */}
-                        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div className="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden">
                             {filteredEmployees.length === 0 ? (
-                                <div className="p-12 text-center text-xs font-black text-slate-400 uppercase tracking-widest">
+                                <div className="p-12 text-center text-xs font-black text-gray-400 uppercase tracking-widest">
                                     No records matching active filter conditions found.
                                 </div>
                             ) : (
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left text-[11px] uppercase tracking-tight">
                                         <thead>
-                                            <tr className="border-b border-slate-200 text-slate-400 font-black tracking-widest bg-slate-50">
+                                            <tr className="border-b border-gray-200 text-gray-400 font-black tracking-widest bg-gray-50">
                                                 <th className="p-4">Staff ID</th>
                                                 <th className="p-4">Full Identity Name</th>
                                                 <th className="p-4">Department wing</th>
@@ -180,13 +180,13 @@ export default function SalaryManagement() {
                                                 <th className="p-4 text-right">Execution Action</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-slate-100 font-bold text-slate-700">
+                                        <tbody className="divide-y divide-gray-100 font-bold text-gray-700">
                                             {filteredEmployees.map((emp) => (
-                                                <tr key={emp.empId} className="hover:bg-slate-50/50 transition-colors">
-                                                    <td className="p-4 font-mono font-black text-slate-900">{emp.empId}</td>
-                                                    <td className="p-4 text-slate-900 text-sm normal-case font-bold">{emp.name}</td>
-                                                    <td className="p-4 text-slate-500 normal-case">{emp.department || 'General Operations'}</td>
-                                                    <td className="p-4 font-mono font-black text-slate-900 text-xs">₹{emp.salary.toLocaleString()}</td>
+                                                <tr key={emp.empId} className="hover:bg-gray-50/50 transition-colors">
+                                                    <td className="p-4 font-mono font-black text-gray-900">{emp.empId}</td>
+                                                    <td className="p-4 text-gray-900 text-sm normal-case font-bold">{emp.name}</td>
+                                                    <td className="p-4 text-gray-500 normal-case">{emp.department || 'General Operations'}</td>
+                                                    <td className="p-4 font-mono font-black text-gray-900 text-xs">₹{emp.salary.toLocaleString()}</td>
                                                     <td className="p-4">
                                                         <span className={`inline-flex items-center px-2.5 py-1 text-[9px] font-black rounded-lg uppercase border tracking-wider ${emp.status === 'Disbursed'
                                                                 ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
@@ -201,8 +201,8 @@ export default function SalaryManagement() {
                                                             disabled={emp.status === 'Disbursed'}
                                                             onClick={() => handleTriggerPayment(emp.empId, emp.name, emp.salary)}
                                                             className={`px-3 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg border transition-all ${emp.status === 'Disbursed'
-                                                                    ? 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed'
-                                                                    : 'bg-fuchsia-50 text-fuchsia-800 border-fuchsia-200 hover:bg-fuchsia-800 hover:text-white shadow-xs'
+                                                                    ? 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed'
+                                                                    : 'bg-indigo-50 text-indigo-800 border-indigo-200 hover:bg-indigo-800 hover:text-white shadow-xs'
                                                                 }`}
                                                         >
                                                             {emp.status === 'Disbursed' ? "Settled" : "⚡ Process Payment"}

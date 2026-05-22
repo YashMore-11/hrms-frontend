@@ -84,23 +84,23 @@ export default function EmployeeDashboard() {
     <div className="min-h-screen flex flex-col md:flex-row bg-white font-sans">
       
       {/* LOCKED VIEWPORT SIDEBAR */}
-      <div className="md:sticky md:top-0 md:h-screen z-20 flex-shrink-0 border-r border-slate-100">
+      <div className="md:sticky md:top-0 md:h-screen z-20 flex-shrink-0 border-r border-gray-100">
         <EmployeeSidebar activeModule="dashboard" />
       </div>
 
       <main className="flex-1 p-4 md:p-8 overflow-y-auto space-y-8">
         
         {/* Welcome Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-6">
           <div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight">Welcome back, Yash! 👋</h1>
-            <p className="text-sm text-slate-500 mt-1">Frontend Developer • Engineering Division</p>
+            <h1 className="text-3xl font-black text-gray-900 tracking-tight">Welcome back, Yash! 👋</h1>
+            <p className="text-sm text-gray-500 mt-1">Frontend Developer • Engineering Division</p>
           </div>
           
-          <div className="flex items-center gap-4 bg-slate-50 p-3 rounded-2xl border border-slate-200">
+          <div className="flex items-center gap-4 bg-gray-50 p-3 rounded-2xl border border-gray-200">
             <div className="text-right hidden sm:block">
-              <span className="block text-xs font-black font-mono text-slate-800">{currentTime || "00:00:00"}</span>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Live System Clock</span>
+              <span className="block text-xs font-black font-mono text-gray-800">{currentTime || "00:00:00"}</span>
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Live System Clock</span>
             </div>
             <button
               onClick={handleCheckInToggle}
@@ -117,33 +117,33 @@ export default function EmployeeDashboard() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-            <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Today's Status</span>
+          <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
+            <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Today's Status</span>
             <div className="flex items-center gap-2">
               <span className={`w-2.5 h-2.5 rounded-full ${isCheckedIn ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
-              <span className="text-sm font-black text-slate-800">{isCheckedIn ? "Active" : "Offline"}</span>
+              <span className="text-sm font-black text-gray-800">{isCheckedIn ? "Active" : "Offline"}</span>
             </div>
-            <span className="block text-[10px] text-slate-500 font-bold mt-1.5 uppercase">
+            <span className="block text-[10px] text-gray-500 font-bold mt-1.5 uppercase">
               {checkInTime ? `In: ${checkInTime}` : checkOutTime ? `Out: ${checkOutTime}` : "No punch log"}
             </span>
           </div>
 
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-            <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Attendance Ratio</span>
-            <span className="text-xl font-black text-slate-900">
+          <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
+            <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Attendance Ratio</span>
+            <span className="text-xl font-black text-gray-900">
               {((attendanceSummary.presentDays / TOTAL_WORKING_DAYS_MONTH) * 100).toFixed(1)}%
             </span>
-            <span className="block text-[10px] text-slate-500 font-bold mt-1">
+            <span className="block text-[10px] text-gray-500 font-bold mt-1">
               {attendanceSummary.presentDays}D Present / {attendanceSummary.lateDays}D Late
             </span>
           </div>
 
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-            <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Hours Progression</span>
-            <span className="text-xl font-black text-slate-900">
-              {attendanceSummary.totalHoursWorked.toFixed(1)} <span className="text-xs font-bold text-slate-400">/ {EXPECTED_TOTAL_HOURS}</span>
+          <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
+            <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Hours Progression</span>
+            <span className="text-xl font-black text-gray-900">
+              {attendanceSummary.totalHoursWorked.toFixed(1)} <span className="text-xs font-bold text-gray-400">/ {EXPECTED_TOTAL_HOURS}</span>
             </span>
-            <div className="w-full bg-slate-100 h-2 rounded-full mt-2 overflow-hidden">
+            <div className="w-full bg-gray-100 h-2 rounded-full mt-2 overflow-hidden">
               <div 
                 className="bg-indigo-600 h-full rounded-full transition-all duration-300" 
                 style={{ width: `${(attendanceSummary.totalHoursWorked / EXPECTED_TOTAL_HOURS) * 100}%` }}
@@ -151,12 +151,12 @@ export default function EmployeeDashboard() {
             </div>
           </div>
 
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-            <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Payroll Status</span>
+          <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
+            <span className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Payroll Status</span>
             <span className="block w-max items-center px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-100 uppercase">
               ✓ Verified Cycle
             </span>
-            <span className="block text-[10px] text-slate-500 font-bold mt-2 uppercase">Cycle Ends: EOM</span>
+            <span className="block text-[10px] text-gray-500 font-bold mt-2 uppercase">Cycle Ends: EOM</span>
           </div>
         </div>
 
@@ -164,20 +164,20 @@ export default function EmployeeDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           {/* Attendance Chart Tracker */}
-          <div className="lg:col-span-2 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div className="lg:col-span-2 bg-white p-6 rounded-3xl border border-gray-200 shadow-sm flex flex-col justify-between">
             <div>
               <div className="flex justify-between items-start mb-6">
                 <div>
-                  <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Attendance Tracker</h3>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase">Daily Hours: Last 7 Periods</p>
+                  <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest">Attendance Tracker</h3>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase">Daily Hours: Last 7 Periods</p>
                 </div>
-                <div className="flex items-center gap-3 text-[10px] font-black text-slate-400 uppercase">
+                <div className="flex items-center gap-3 text-[10px] font-black text-gray-400 uppercase">
                   <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-indigo-600" /> Work</div>
                   <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-rose-500" /> Absence</div>
                 </div>
               </div>
 
-              <div className="h-48 flex items-end justify-between px-2 pt-4 border-b border-slate-100">
+              <div className="h-48 flex items-end justify-between px-2 pt-4 border-b border-gray-100">
                 {MOCK_WEEKLY_HOURS_DATA.map((item, idx) => {
                   const percentageHeight = (item.hours / 12) * 100;
                   return (
@@ -191,33 +191,33 @@ export default function EmployeeDashboard() {
                           }`} />
                         )}
                       </div>
-                      <span className="text-[10px] font-black text-slate-400 mt-2 block uppercase">{item.day}</span>
+                      <span className="text-[10px] font-black text-gray-400 mt-2 block uppercase">{item.day}</span>
                     </div>
                   );
                 })}
               </div>
             </div>
-            <div className="flex justify-between items-center text-[10px] font-black text-slate-400 pt-4 uppercase">
+            <div className="flex justify-between items-center text-[10px] font-black text-gray-400 pt-4 uppercase">
               <span>Rate: 8.0H/Day</span>
               <span className="text-indigo-600 font-black tracking-widest">Cumulative: {attendanceSummary.totalHoursWorked}H</span>
             </div>
           </div>
 
           {/* Financial Ledger Card */}
-          <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm flex flex-col justify-between">
             <div>
-              <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-4">Financial Ledger</h3>
+              <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest mb-4">Financial Ledger</h3>
               <div className="space-y-4">
-                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                  <span className="block text-[10px] font-black text-slate-400 uppercase mb-1">Base Salary</span>
-                  <span className="text-lg font-mono font-black text-slate-900">${BASE_SALARY.toLocaleString()}</span>
+                <div className="p-3 bg-gray-50 rounded-xl border border-gray-200">
+                  <span className="block text-[10px] font-black text-gray-400 uppercase mb-1">Base Salary</span>
+                  <span className="text-lg font-mono font-black text-gray-900">${BASE_SALARY.toLocaleString()}</span>
                 </div>
                 <div className="space-y-2 text-[11px] font-bold uppercase">
-                  <div className="flex justify-between border-b border-slate-100 pb-2 text-slate-400">
+                  <div className="flex justify-between border-b border-gray-100 pb-2 text-gray-400">
                     <span>Base Work Pay</span>
-                    <span className="text-slate-800 font-mono">${calculatedSalaryAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+                    <span className="text-gray-800 font-mono">${calculatedSalaryAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
                   </div>
-                  <div className="flex justify-between border-b border-slate-100 pb-2 text-slate-400">
+                  <div className="flex justify-between border-b border-gray-100 pb-2 text-gray-400">
                     <span>OT Bonus ({totalOvertimeHours}H)</span>
                     <span className="text-emerald-600 font-mono">+${overtimeEarnings.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
                   </div>
@@ -232,11 +232,11 @@ export default function EmployeeDashboard() {
         </div>
 
         {/* Overtime Ledger Table Card */}
-        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+        <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div>
-              <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">Overtime Ledger</h3>
-              <p className="text-[10px] font-bold text-slate-400 uppercase">Verified extra working hours history</p>
+              <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest">Overtime Ledger</h3>
+              <p className="text-[10px] font-bold text-gray-400 uppercase">Verified extra working hours history</p>
             </div>
             <span className="text-[10px] font-black text-teal-700 bg-teal-50 px-4 py-2 rounded-full border border-teal-200 uppercase tracking-widest w-max">
               Total OT: ${overtimeEarnings.toLocaleString(undefined, { maximumFractionDigits: 2 })}
@@ -246,21 +246,21 @@ export default function EmployeeDashboard() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-[11px] uppercase">
               <thead>
-                <tr className="border-b border-slate-200 text-slate-400 font-black tracking-widest bg-slate-50">
+                <tr className="border-b border-gray-200 text-gray-400 font-black tracking-widest bg-gray-50">
                   <th className="p-4">Date</th>
                   <th className="p-4">Hours</th>
                   <th className="p-4">Description</th>
                   <th className="p-4 text-right">Payoff</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-bold text-slate-700">
+              <tbody className="divide-y divide-gray-100 font-bold text-gray-700">
                 {MOCK_EXTRA_WORKING_HISTORY.map((log) => {
                   const segmentEarnings = log.hoursLogged * overtimeMultiplierRate;
                   return (
-                    <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
+                    <tr key={log.id} className="hover:bg-gray-50/50 transition-colors">
                       <td className="p-4 whitespace-nowrap">{log.date}</td>
-                      <td className="p-4 font-mono text-slate-900 font-black">{log.hoursLogged}H</td>
-                      <td className="p-4 max-w-xs truncate text-slate-400 normal-case">{log.description}</td>
+                      <td className="p-4 font-mono text-gray-900 font-black">{log.hoursLogged}H</td>
+                      <td className="p-4 max-w-xs truncate text-gray-400 normal-case">{log.description}</td>
                       <td className="p-4 text-right">
                         <span className="inline-flex items-center px-3 py-1 rounded-lg text-[10px] font-black bg-emerald-50 text-emerald-600 border border-emerald-100 uppercase shadow-sm">
                           +${segmentEarnings.toLocaleString(undefined, { minimumFractionDigits: 2 })}
