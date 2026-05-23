@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 
 // Import centralized database module models
 const Employee = require('../models/Employee');
@@ -10,11 +13,58 @@ const Admin = require('../models/Admin');
 const verifyToken = require('../middleware/auth');
 
 // ==========================================
+// 📂 MULTER BINARY FILE STORAGE ARCHITECTURE
+// ==========================================
+// Guarantee target static allocation directory exists on disk layout
+const uploadDir = path.join(__dirname, '../uploads');
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+        // Enforce file identity tracking structure: timestamp-field-original
+        cb(null, `${Date.now()}-${file.fieldname}-${file.originalname}`);
+    }
+});
+
+// Structural validator filtering layout parameters
+const fileFilter = (req, file, cb) => {
+    if (file.mimetype === 'application/pdf') {
+        cb(null, true);
+    } else {
+        cb(new Error('Invalid file type format extension. Only PDF document uploads are permitted.'), false);
+    }
+};
+
+const upload = multer({
+    storage: storage,
+    fileFilter: fileFilter,
+    limits: { fileSize: 5 * 1024 * 1024 } // Strict 5 Megabyte constraint threshold
+});
+
+// Declare specific named keys matching React form data states
+const onboardingUploads = upload.fields([
+    { name: 'resume', maxCount: 1 },
+    { name: 'panCard', maxCount: 1 },
+    { name: 'aadhaarCard', maxCount: 1 }
+]);
+
+// ==========================================
 // 📋 1. GET: Fetch All Employee Records
 // ==========================================
 // Base Path: GET http://localhost:5000/api/employees
 router.get('/', verifyToken, async (req, res) => {
     try {
+        // Enforce safety visibility: Only Admins and HR can see the full roster list
+        const requestorRole = req.user && req.user.role ? req.user.role.toLowerCase() : 'employee';
+        if (requestorRole !== 'admin' && requestorRole !== 'hr') {
+            return res.status(403).json({ message: "Access Denied: Insufficient authorization permissions." });
+        }
+
         const records = await Employee.find({}, '-password');
         res.json(records);
     } catch (err) {
@@ -41,7 +91,8 @@ router.get('/team-leaders', verifyToken, async (req, res) => {
 // 🚀 3. POST: Collision-Free Sequential Onboarding
 // ==========================================
 // Base Path: POST http://localhost:5000/api/employees/create-employee
-router.post('/create-employee', verifyToken, async (req, res) => {
+// 🔄 UPDATED: Injected onboardingUploads parser right before controller parsing pipeline
+router.post('/create-employee', verifyToken, onboardingUploads, async (req, res) => {
     const {
         name, gender, age, email, password, role,
         department, phone, address, previousCompany,
@@ -49,11 +100,31 @@ router.post('/create-employee', verifyToken, async (req, res) => {
     } = req.body;
 
     try {
+        // 🛡️ SECURITY STEP 1: Safeguard token payload recovery
+        if (!req.user) {
+            return res.status(401).json({ message: "Access Denied: User context token payload is missing." });
+        }
+
+        // Standardize strings to lowercase to prevent evaluation bypass tricks
+        const requestorRole = req.user.role ? req.user.role.toLowerCase() : 'employee';
+        const targetRole = role ? role.toLowerCase() : 'employee';
+
+        // 🛡️ SECURITY STEP 2: Restrict HR from escalating roles to Admin or higher
+        if (requestorRole === 'hr' && targetRole !== 'employee' && targetRole !== 'hr') {
+            return res.status(403).json({ message: "HR users are strictly restricted to creating 'employee' or 'hr' profiles only." });
+        }
+
+        // Prevent standard employees from hitting this endpoint if they try to bypass frontend guards
+        if (requestorRole !== 'admin' && requestorRole !== 'hr') {
+            return res.status(403).json({ message: "Access Denied: Unauthorized account role permissions." });
+        }
+
         let existingEmployee = await Employee.findOne({ email: email.trim().toLowerCase() });
         if (existingEmployee) {
             return res.status(400).json({ message: "A worker with this email already exists" });
         }
 
+        // Generate custom sequential Employee IDs
         const currentYear = new Date().getFullYear();
         const yearPrefix = `EMP-${currentYear}-`;
 
@@ -78,14 +149,20 @@ router.post('/create-employee', verifyToken, async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password.trim(), salt);
 
-        const newWorker = new Employee({
+        // Extract individual path keys from multi-file req.files object matrix safely
+        const resumePath = req.files && req.files['resume'] ? req.files['resume'][0].filename : "";
+        const panPath = req.files && req.files['panCard'] ? req.files['panCard'][0].filename : "";
+        const aadhaarPath = req.files && req.files['aadhaarCard'] ? req.files['aadhaarCard'][0].filename : "";
+
+        // Build core document structure safely
+        const newWorkerData = {
             empId: finalEmpId,
             name,
             gender,
             age: Number(age) || 0,
             email: email.trim().toLowerCase(),
             password: hashedPassword,
-            role: role.toLowerCase(),
+            role: targetRole,
             department,
             phone,
             address,
@@ -93,19 +170,31 @@ router.post('/create-employee', verifyToken, async (req, res) => {
             previousRole: previousRole || 'None',
             yearsOfExperience: yearsOfExperience || '0 Years',
             assignedLeader: assignedLeader || null,
-            Admin: req.user.id,
-            createdBy: req.user.id
-        });
+            createdBy: req.user.id,
+            // 📂 Map dynamic upload paths to schema parameters
+            resume: resumePath,
+            panCard: panPath,
+            aadhaarCard: aadhaarPath
+        };
 
+        // 🔗 CONDITIONALLY ASSIGN RELATIONAL RELATIONSHIP
+        if (requestorRole === 'admin') {
+            newWorkerData.Admin = req.user.id;
+        }
+
+        const newWorker = new Employee(newWorkerData);
         await newWorker.save();
 
-        await Admin.findByIdAndUpdate(
-            req.user.id,
-            { $push: { Employee: newWorker._id } }
-        );
+        // 💾 CONDITIONALLY UPDATE ADMIN LEDGER INDEX
+        if (requestorRole === 'admin') {
+            await Admin.findByIdAndUpdate(
+                req.user.id,
+                { $push: { Employee: newWorker._id } }
+            );
+        }
 
         res.status(201).json({
-            message: `${role.toUpperCase()} account onboarded successfully with ID: ${finalEmpId}`,
+            message: `${targetRole.toUpperCase()} account onboarded successfully with ID: ${finalEmpId}`,
             empId: finalEmpId
         });
     } catch (err) {
@@ -120,13 +209,23 @@ router.post('/create-employee', verifyToken, async (req, res) => {
 // Base Path: GET http://localhost:5000/api/employees/profile
 router.get('/profile', verifyToken, async (req, res) => {
     try {
-        const workerRecord = await Employee.findById(req.user.id).select('-password');
-        if (!workerRecord) {
-            return res.status(404).json({ message: "Employee document entity not found." });
+        const userRole = req.user && req.user.role ? req.user.role.toLowerCase() : 'employee';
+        let userRecord = null;
+
+        // Dynamic lookup depending on whether the user is an Admin or an Employee/HR
+        if (userRole === 'admin') {
+            userRecord = await Admin.findById(req.user.id).select('-password');
+        } else {
+            // This safely pulls both standard employees AND HR personnel profiles
+            userRecord = await Employee.findById(req.user.id).select('-password');
         }
-        res.status(200).json(workerRecord);
+
+        if (!userRecord) {
+            return res.status(404).json({ message: "User document identity record not found." });
+        }
+        res.status(200).json(userRecord);
     } catch (err) {
-        console.error("Employee profile dynamic recovery drop:", err);
+        console.error("Profile dynamic recovery drop:", err);
         res.status(500).json({ message: "Internal runtime error locating worker ledger profiles." });
     }
 });
@@ -137,40 +236,46 @@ router.get('/profile', verifyToken, async (req, res) => {
 // Base Path: PUT http://localhost:5000/api/employees/profile
 router.put('/profile', verifyToken, async (req, res) => {
     const {
-        phone,
-        address,
-        role,
-        department,
-        previousCompany,
-        previousRole, // ✅ Destructured correctly
-        yearsOfExperience
+        phone, address, department, previousCompany, previousRole, yearsOfExperience
     } = req.body;
 
     try {
-        const updatedWorker = await Employee.findByIdAndUpdate(
-            req.user.id,
-            {
-                $set: {
-                    phone: phone ? phone.trim() : "",
-                    address: address ? address.trim() : "",
-                    role: role ? role.trim().toLowerCase() : "employee",
-                    department: department ? department.trim() : "",
-                    previousCompany: previousCompany ? previousCompany.trim() : "None",
-                    previousRole: previousRole ? previousRole.trim() : "None", // ✅ FIXED: Saved values cleanly
-                    yearsOfExperience: yearsOfExperience ? yearsOfExperience.trim() : "0 Years"
-                }
-            },
-            { returnDocument: 'after', runValidators: true }
-        ).select('-password');
+        const userRole = req.user && req.user.role ? req.user.role.toLowerCase() : 'employee';
+        let updatedUser = null;
 
-        if (!updatedWorker) {
+        const updatePayload = {
+            phone: phone ? phone.trim() : "",
+            address: address ? address.trim() : "",
+            department: department ? department.trim() : "",
+            previousCompany: previousCompany ? previousCompany.trim() : "None",
+            previousRole: previousRole ? previousRole.trim() : "None",
+            yearsOfExperience: yearsOfExperience ? yearsOfExperience.trim() : "0 Years"
+        };
+
+        if (userRole === 'admin') {
+            updatedUser = await Admin.findByIdAndUpdate(
+                req.user.id,
+                { $set: updatePayload },
+                { returnDocument: 'after', runValidators: true }
+            ).select('-password');
+        } else {
+            // Employees and HR personnel can update their profile specs safely.
+            // We strip out the explicit "role" from req.body to prevent users from editing their own database privileges!
+            updatedUser = await Employee.findByIdAndUpdate(
+                req.user.id,
+                { $set: updatePayload },
+                { returnDocument: 'after', runValidators: true }
+            ).select('-password');
+        }
+
+        if (!updatedUser) {
             return res.status(404).json({ message: "Personnel workspace record is missing." });
         }
 
-        res.status(200).json(updatedWorker);
+        res.status(200).json(updatedUser);
     } catch (err) {
-        console.error("Worker self-mutation write transaction failure:", err);
-        res.status(500).json({ message: "Internal server fault committing changes down to cluster layer columns." });
+        console.error("User self-mutation write transaction failure:", err);
+        res.status(500).json({ message: "Internal server fault committing changes down to database layer." });
     }
 });
 

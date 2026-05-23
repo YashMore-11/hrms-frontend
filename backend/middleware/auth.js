@@ -11,11 +11,13 @@ const verifyToken = (req, res, next) => {
 
     try {
         const verified = jwt.verify(token, JWT_SECRET);
-        req.user = verified;
+        req.user = verified; // Attaches the decoded payload ({ id, role }) to req.user
         next();
     } catch (err) {
-        res.status(403).json({ message: "Invalid or expired session token key" });
+        return res.status(403).json({ message: "Invalid or expired session token key" });
     }
 };
 
+// ⚠️ CRITICAL: Export ONLY the function itself. 
+// Do not include router.get, router.post, app.get, or any router variables in this file.
 module.exports = verifyToken;

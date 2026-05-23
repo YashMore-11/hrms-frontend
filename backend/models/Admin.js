@@ -60,18 +60,28 @@ const AdminSchema = new mongoose.Schema({
     default: '0',
     trim: true
   },
-
-  
   gstId: {
     type: String,
     default: '',
     trim: true,
     uppercase: true
   },
+
+  // 🔄 UPDATED: Enum includes '500+' option for enterprise-scale matching
   companySizeRange: {
     type: String,
     default: '1-10',
-    trim: true
+    trim: true,
+    enum: {
+      values: ['1-10', '11-50', '51-200', '201-500', '500+'],
+      message: 'Configuration Error: {VALUE} is not a valid company scale parameter.'
+    }
+  },
+
+  // Global Switch Token. Admin can flip this via frontend configurations to disable HR actions
+  isHrLeavePowerEnabled: {
+    type: Boolean,
+    default: true
   },
 
   // Tracks custom system configurations pools
