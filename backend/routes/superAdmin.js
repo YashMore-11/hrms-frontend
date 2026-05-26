@@ -8,6 +8,13 @@ const SystemSetting = require('../models/SystemSetting');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const Razorpay = require('razorpay');
+
+// Razorpay Instance (Aap apne asli Test Keys Razorpay Dashboard se nikal kar yahan daal sakte ho baad mein)
+const razorpayInstance = new Razorpay({
+    key_id: 'rzp_test_YOUR_KEY_HERE', // Ise abhi dummy hi rehne do ya apna test key daalo
+    key_secret: 'YOUR_SECRET_HERE',
+});
 
 // 📁 Uploads folder automatically banao agar nahi hai toh
 const dir = './uploads';
@@ -68,11 +75,10 @@ router.delete('/companies/:id', async (req, res) => {
     }
 });
 // ==========================================
-// ➕ 4. POST: Nayi Company Register karna (ENTERPRISE UPGRADE)
+// ➕ 4. POST: Nayi Company Register karna (WITH IMAGE UPLOAD)
 // ==========================================
-router.post('/companies', async (req, res) => {
+router.post('/companies', upload.single('logo'), async (req, res) => {
     try {
-        // req.body mein ab poora detailed form aayega
         const { adminEmail } = req.body;
         
         // 1. Check karo ki is email se koi pehle se toh nahi hai
@@ -81,50 +87,59 @@ router.post('/companies', async (req, res) => {
             return res.status(400).json({ message: "Is email se company already registered hai!" });
         }
 
-        // 2. Nayi company ka data seedha req.body se lo (Kyunki schema handle kar lega)
-        const newCompany = new Company(req.body);
+        // 2. Data copy karo
+        const companyData = { ...req.body };
+        
+        // 3. Agar nayi image upload hui hai, toh uska rasta save karo
+        if (req.file) {
+            companyData.logo = `/uploads/${req.file.filename}`;
+        }
 
-        // 3. Save kar do
+        // 4. Save kar do
+        const newCompany = new Company(companyData);
         await newCompany.save();
-        res.status(201).json({ message: "Company registered successfully and is Pending Approval!", company: newCompany });
+        
+        res.status(201).json({ message: "Company registered successfully!", company: newCompany });
     } catch (err) {
         res.status(500).json({ message: "Company add karne mein error aaya", error: err.message });
     }
 });
 
 // ==========================================
-// 💳 5. GET: Subscription & Billing Stats
+// 💳 GET: Billing & Revenue Stats
 // ==========================================
 router.get('/billing-stats', async (req, res) => {
     try {
-        // Sirf unhi companies ko lenge jo 'Active' hain
-        const companies = await Company.find({ status: 'Active' });
-
-        // Har plan ka price set karte hain
-        const planPrices = {
+        const companies = await Company.find();
+        
+        let totalRevenue = 0;
+        let planCounts = {
             'Free Trial': 0,
-            'Starter': 1499,
-            'Business': 5999,
-            'Enterprise': 24999
+            'Starter': 0,
+            'Business': 0,
+            'Enterprise': 0
         };
 
-        let totalRevenue = 0;
-        let planCounts = { 'Free Trial': 0, 'Starter': 0, 'Business': 0, 'Enterprise': 0 };
-
         companies.forEach(comp => {
-            const plan = comp.subscriptionPlan || 'Free Trial';
-            if (planCounts[plan] !== undefined) {
-                planCounts[plan] += 1;
-                totalRevenue += planPrices[plan];
+            // Sirf Active ya Pending companies ka hi bill count karna hai (Blacklisted/Suspended ka nahi)
+            if (comp.status !== 'Blacklisted') {
+                const plan = comp.subscriptionPlan || 'Free Trial';
+                
+                // Plan ka count badhao
+                if (planCounts[plan] !== undefined) {
+                    planCounts[plan] += 1;
+                }
+
+                // Asli prices ke hisaab se Revenue jodna
+                if (plan === 'Starter') totalRevenue += 999;
+                else if (plan === 'Business') totalRevenue += 2499;
+                else if (plan === 'Enterprise') totalRevenue += 4999;
             }
         });
 
-        res.status(200).json({
-            totalRevenue,
-            planCounts
-        });
+        res.status(200).json({ totalRevenue, planCounts });
     } catch (err) {
-        res.status(500).json({ message: "Billing stats fetch karne mein error aaya", error: err.message });
+        res.status(500).json({ message: "Billing stats fetch failed", error: err.message });
     }
 });
 // ==========================================
@@ -238,7 +253,25 @@ router.put('/companies/:id', upload.single('logo'), async (req, res) => {
         res.status(500).json({ message: "Update failed", error: err.message });
     }
 });
+// ==========================================
+// 💳 10. POST: Razorpay Payment Gateway (Test)
+// ==========================================
+router.post('/create-payment', async (req, res) => {
+    try {
+        const { amount } = req.body; // Amount in INR
 
+        const options = {
+            amount: amount * 100, // Razorpay amount ko paise (paisa) mein leta hai, isliye * 100
+            currency: "INR",
+            receipt: `receipt_test_${Date.now()}`
+        };
+
+        const order = await razorpayInstance.orders.create(options);
+        res.status(200).json({ success: true, order });
+    } catch (err) {
+        res.status(500).json({ message: "Razorpay order creation failed", error: err.message });
+    }
+});
 // Settings update karna (Maintenance Mode & Modules)
 router.put('/settings', async (req, res) => {
     try {
