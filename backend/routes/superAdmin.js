@@ -47,27 +47,25 @@ router.delete('/companies/:id', async (req, res) => {
     }
 });
 // ==========================================
-// ➕ 4. POST: Nayi Company Register karna
+// ➕ 4. POST: Nayi Company Register karna (ENTERPRISE UPGRADE)
 // ==========================================
 router.post('/companies', async (req, res) => {
     try {
-        const { companyName, adminEmail, phone, subscriptionPlan } = req.body;
+        // req.body mein ab poora detailed form aayega
+        const { adminEmail } = req.body;
         
-        // Check agar email pehle se exist karti hai
+        // 1. Check karo ki is email se koi pehle se toh nahi hai
         const existingCompany = await Company.findOne({ adminEmail });
         if (existingCompany) {
             return res.status(400).json({ message: "Is email se company already registered hai!" });
         }
 
-        const newCompany = new Company({
-            companyName,
-            adminEmail,
-            phone,
-            subscriptionPlan
-        });
+        // 2. Nayi company ka data seedha req.body se lo (Kyunki schema handle kar lega)
+        const newCompany = new Company(req.body);
 
+        // 3. Save kar do
         await newCompany.save();
-        res.status(201).json({ message: "Company successfully added!", company: newCompany });
+        res.status(201).json({ message: "Company registered successfully and is Pending Approval!", company: newCompany });
     } catch (err) {
         res.status(500).json({ message: "Company add karne mein error aaya", error: err.message });
     }
