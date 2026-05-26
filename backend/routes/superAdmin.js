@@ -4,6 +4,7 @@ const Company = require('../models/Company');
 const Admin = require('../models/Admin');       
 const Employee = require('../models/Employee'); 
 const Ticket = require('../models/Ticket');
+const SystemSetting = require('../models/SystemSetting');
 
 // ==========================================
 // 🏢 1. GET: Saari Companies ki List fetch karna
@@ -174,6 +175,42 @@ router.put('/tickets/:id/status', async (req, res) => {
         res.status(200).json({ message: "Ticket status updated!", ticket: updatedTicket });
     } catch (err) {
         res.status(500).json({ message: "Ticket update fail ho gaya", error: err.message });
+    }
+});
+// ==========================================
+// ⚙️ 8. GET & PUT: Global System Settings
+// ==========================================
+// Settings fetch karna (Agar nahi hai toh default bana dega)
+router.get('/settings', async (req, res) => {
+    try {
+        let settings = await SystemSetting.findOne();
+        if (!settings) {
+            settings = new SystemSetting();
+            await settings.save();
+        }
+        res.status(200).json(settings);
+    } catch (err) {
+        res.status(500).json({ message: "Settings fetch failed", error: err.message });
+    }
+});
+
+// Settings update karna (Maintenance Mode & Modules)
+router.put('/settings', async (req, res) => {
+    try {
+        let settings = await SystemSetting.findOne();
+        if (!settings) {
+            settings = new SystemSetting(req.body);
+        } else {
+            // Update existing values
+            settings.maintenanceMode = req.body.maintenanceMode;
+            settings.maintenanceMessage = req.body.maintenanceMessage;
+            settings.modules = req.body.modules;
+        }
+        
+        const updatedSettings = await settings.save();
+        res.status(200).json({ message: "System settings updated successfully!", settings: updatedSettings });
+    } catch (err) {
+        res.status(500).json({ message: "Settings update failed", error: err.message });
     }
 });
 module.exports = router;
