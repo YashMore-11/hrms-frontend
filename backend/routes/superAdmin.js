@@ -5,6 +5,26 @@ const Admin = require('../models/Admin');
 const Employee = require('../models/Employee'); 
 const Ticket = require('../models/Ticket');
 const SystemSetting = require('../models/SystemSetting');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// 📁 Uploads folder automatically banao agar nahi hai toh
+const dir = './uploads';
+if (!fs.existsSync(dir)){
+    fs.mkdirSync(dir);
+}
+
+// 📸 Multer Storage Setup
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'uploads/');
+    },
+    filename: function (req, file, cb) {
+        cb(null, 'logo-' + Date.now() + path.extname(file.originalname));
+    }
+});
+const upload = multer({ storage: storage });
 
 // ==========================================
 // 🏢 1. GET: Saari Companies ki List fetch karna
@@ -191,6 +211,31 @@ router.get('/settings', async (req, res) => {
         res.status(200).json(settings);
     } catch (err) {
         res.status(500).json({ message: "Settings fetch failed", error: err.message });
+    }
+});
+// ==========================================
+// 📝 9. PUT: Edit Company Details & Logo Upload
+// ==========================================
+router.put('/companies/:id', upload.single('logo'), async (req, res) => {
+    try {
+        const updateData = { ...req.body };
+        
+        // Agar nayi image aayi hai, toh uska rasta (path) save karo
+        if (req.file) {
+            updateData.logo = `/uploads/${req.file.filename}`;
+        }
+
+        const updatedCompany = await Company.findByIdAndUpdate(
+            req.params.id, 
+            updateData, 
+            { new: true } // Update hone ke baad naya data return karega
+        );
+
+        if (!updatedCompany) return res.status(404).json({ message: "Company nahi mili!" });
+
+        res.status(200).json({ message: "Company details updated successfully!", company: updatedCompany });
+    } catch (err) {
+        res.status(500).json({ message: "Update failed", error: err.message });
     }
 });
 
