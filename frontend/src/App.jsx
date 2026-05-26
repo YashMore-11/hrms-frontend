@@ -24,6 +24,9 @@ import AdminLeaveAcceptance from './admin/LeaveAcceptance';
 import AdminAttendanceManagement from './admin/AttendanceManagement';
 import AdminProfile from './admin/Profile';
 
+// Super Admin View Components
+import SuperAdminDashboard from './superadmin/SuperAdminDashboard';
+
 function RoleGuard({ children, allowedRoles }) {
   const token = localStorage.getItem('authToken');
   const userRole = localStorage.getItem('userRole'); 
@@ -36,7 +39,8 @@ function RoleGuard({ children, allowedRoles }) {
   if (!allowedRoles.includes(userRole)) {
     if (userRole === 'employee') return <Navigate to="/employee/dashboard" replace />;
     if (userRole === 'hr') return <Navigate to="/hr/dashboard" replace />;
-    if (userRole === 'admin') return <Navigate to="/admin/dashboard" replace />;
+    if (userRole === 'admin') return <Navigate to="/admin/Dashboard" replace />;
+    if (userRole === 'superadmin') return <Navigate to="/superadmin/dashboard" replace />;
     return <Navigate to="/" replace />;
   }
 
@@ -109,7 +113,6 @@ export default function App() {
         {/* =========================================================
             🔒 SECURE ADMIN WORKSPACE (Only users with 'admin' token context)
            ========================================================= */}
-        
         <Route path="/admin/Profile" element={
           <RoleGuard allowedRoles={['admin']}>
             <AdminProfile />
@@ -124,7 +127,7 @@ export default function App() {
           <RoleGuard allowedRoles={['admin']}>
             <AdminCreateUser />
           </RoleGuard>
-        } />o
+        } />
         <Route path="/admin/SalaryManagement" element={
           <RoleGuard allowedRoles={['admin']}>
             <AdminSalaryManagement />
@@ -141,8 +144,14 @@ export default function App() {
           </RoleGuard>
         } />
 
-        
-        
+        {/* =========================================================
+            🔒 SECURE SUPER ADMIN WORKSPACE (God Mode)
+           ========================================================= */}
+        <Route path="/superadmin/dashboard" element={
+          <RoleGuard allowedRoles={['superadmin']}>
+            <SuperAdminDashboard />
+          </RoleGuard>
+        } />
 
         {/* Fallback Catch-All Safety Net Route */}
         <Route path="*" element={<Navigate to="/" replace />} />

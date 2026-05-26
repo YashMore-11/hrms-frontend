@@ -1,3 +1,4 @@
+const superAdminRoutes = require('./routes/superAdmin');
 // ==========================================
 // 📦 CORE MODULE IMPORTS
 // ==========================================
@@ -62,6 +63,7 @@ app.use('/api/roles', roleRoutes);
 app.use('/api/employees', employeeRoutes);
 app.use('/api/leaves', leaveRoutes);
 app.use('/api/attendance', attendanceRoutes); // 👈 ✅ ADDED: Mounted the missing metrics route path layer!
+app.use('/api/superadmin', superAdminRoutes);
 
 // ==========================================
 // 🛑 ERROR HANDLING GATES & SYSTEM SHIELDS
