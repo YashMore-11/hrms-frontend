@@ -50,7 +50,7 @@ export default function HrCreateUser() {
 
             // Fetch Departments
             try {
-                const res = await fetch('http://localhost:5000/api/departments', {
+                const res = await fetch('/api/departments', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (res.ok) {
@@ -61,7 +61,7 @@ export default function HrCreateUser() {
 
             // Fetch Team Leaders
             try {
-                const res = await fetch('http://localhost:5000/api/employees/team-leaders', {
+                const res = await fetch('/api/employees/team-leaders', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (res.ok) {
@@ -107,7 +107,7 @@ export default function HrCreateUser() {
         if (aadhaarFile) formData.append('aadhaarCard', aadhaarFile);
 
         try {
-            const res = await fetch('http://localhost:5000/api/employees/create-employee', {
+            const res = await fetch('/api/employees/create-employee', {
                 method: 'POST',
                 // ⚠️ CRITICAL: Leave out 'Content-Type' so the boundary values are mapped natively
                 headers: { 'Authorization': `Bearer ${token}` },

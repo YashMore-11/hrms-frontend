@@ -18,7 +18,7 @@ export default function AttendancePage() {
       }
 
       try {
-        const res = await fetch('http://localhost:5000/api/attendance/status', {
+        const res = await fetch('/api/attendance/status', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
@@ -44,7 +44,7 @@ export default function AttendancePage() {
     const endpoint = isCheckedIn ? 'checkout' : 'checkin';
 
     try {
-      const res = await fetch(`http://localhost:5000/api/attendance/${endpoint}`, {
+      const res = await fetch(`/api/attendance/${endpoint}`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

@@ -53,7 +53,7 @@ export default function AdminCreateUser() {
 
             // Fetch Departments
             try {
-                const res = await fetch('http://localhost:5000/api/departments', {
+                const res = await fetch('/api/departments', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (res.ok) {
@@ -64,7 +64,7 @@ export default function AdminCreateUser() {
 
             // Fetch Roles
             try {
-                const res = await fetch('http://localhost:5000/api/roles', {
+                const res = await fetch('/api/roles', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (res.ok) {
@@ -76,7 +76,7 @@ export default function AdminCreateUser() {
 
             // Fetch Team Leaders
             try {
-                const res = await fetch('http://localhost:5000/api/employees/team-leaders', {
+                const res = await fetch('/api/employees/team-leaders', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (res.ok) {
@@ -99,7 +99,7 @@ export default function AdminCreateUser() {
         if (!confirm(`Are you sure you want to remove "${targetDept}"?`)) return;
         try {
             const token = localStorage.getItem('authToken');
-            await fetch('http://localhost:5000/api/departments', {
+            await fetch('/api/departments', {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: targetDept })
@@ -119,7 +119,7 @@ export default function AdminCreateUser() {
         if (!confirm(`Are you sure you want to remove the role "${targetRole}"?`)) return;
         try {
             const token = localStorage.getItem('authToken');
-            await fetch('http://localhost:5000/api/roles', {
+            await fetch('/api/roles', {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ title: targetRole })
@@ -147,7 +147,7 @@ export default function AdminCreateUser() {
             }
             activeRoleStr = newRoleTitle.trim().toLowerCase();
             try {
-                await fetch('http://localhost:5000/api/roles', {
+                await fetch('/api/roles', {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ title: activeRoleStr })
@@ -163,7 +163,7 @@ export default function AdminCreateUser() {
             }
             activeDepartmentStr = newDepartmentName.trim();
             try {
-                await fetch('http://localhost:5000/api/departments', {
+                await fetch('/api/departments', {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name: activeDepartmentStr })
@@ -193,7 +193,7 @@ export default function AdminCreateUser() {
         if (aadhaarFile) formData.append('aadhaarCard', aadhaarFile);
 
         try {
-            const res = await fetch('http://localhost:5000/api/employees/create-employee', {
+            const res = await fetch('/api/employees/create-employee', {
                 method: 'POST',
                 // ⚠️ CRITICAL: Remove 'Content-Type' header when passing FormData; the browser sets it automatically with the boundary token!
                 headers: { 'Authorization': `Bearer ${token}` },
@@ -226,7 +226,7 @@ export default function AdminCreateUser() {
                 setSelectedRole(activeRoleStr);
             }
 
-            const updatedLeadersRes = await fetch('http://localhost:5000/api/employees/team-leaders', {
+            const updatedLeadersRes = await fetch('/api/employees/team-leaders', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (updatedLeadersRes.ok) {

@@ -20,7 +20,7 @@ export default function AttendanceManagement() {
         const fetchAttendanceLogs = async () => {
             const token = localStorage.getItem('authToken');
             try {
-                const res = await fetch('http://localhost:5000/api/employees', {
+                const res = await fetch('/api/employees', {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`,

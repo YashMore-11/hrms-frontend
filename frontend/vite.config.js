@@ -2,9 +2,9 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
-import { fileURLToPath } from 'url' // 1. Import this built-in utility
+import { fileURLToPath } from 'url'
 
-// 2. Re-create __dirname manually for ES Modules
+// Re-create __dirname manually for ES Modules
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
@@ -13,8 +13,16 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
-      // 3. This will now resolve perfectly!
       '@': path.resolve(__dirname, './src'), 
     },
   },
+  // 👇 CORS error bypass karne ke liye Proxy server setup
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5001', 
+        changeOrigin: true,
+      }
+    }
+  }
 })

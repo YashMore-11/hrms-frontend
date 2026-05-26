@@ -45,7 +45,7 @@ export default function HRLeaveApplicationPage() {
                 }
             }
 
-            const res = await fetch('http://localhost:5000/api/leaves/my-requests', {
+            const res = await fetch('/api/leaves/my-requests', {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -105,7 +105,7 @@ export default function HRLeaveApplicationPage() {
         };
 
         try {
-            const res = await fetch('http://localhost:5000/api/leaves/apply', {
+            const res = await fetch('/api/leaves/apply', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,

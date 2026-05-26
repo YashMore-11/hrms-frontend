@@ -37,7 +37,7 @@ export default function EmployeeProfile() {
     const token = localStorage.getItem('authToken');
 
     try {
-      const res = await fetch('http://localhost:5000/api/employees/profile', {
+      const res = await fetch('/api/employees/profile', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -114,7 +114,7 @@ export default function EmployeeProfile() {
     };
 
     try {
-      const res = await fetch('http://localhost:5000/api/employees/profile', {
+      const res = await fetch('/api/employees/profile', {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -157,7 +157,7 @@ export default function EmployeeProfile() {
       toast.error("⚠️ Document resource unavailable or missing for this worker profile.");
       return;
     }
-    window.open(`http://localhost:5000/uploads/${filename}`, '_blank');
+    window.open(`/uploads/${filename}`, '_blank');
   };
 
   if (isLoading) {

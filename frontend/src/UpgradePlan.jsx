@@ -31,9 +31,7 @@ export default function UpgradePlan() {
         }
     ];
 
-    // ✅ FIXED: Now performs an asynchronous network commit to MongoDB
     const handleProcessCheckout = async (planName, amount) => {
-        // Retrieve temporary signup profile details cached inside client local storage
         const rawCachedData = localStorage.getItem('pendingAdminData');
 
         if (!rawCachedData) {
@@ -45,8 +43,8 @@ export default function UpgradePlan() {
         const pendingPayload = JSON.parse(rawCachedData);
 
         try {
-            // Commit user fields to database cluster directly
-            const res = await fetch('http://localhost:5000/api/auth/register-admin', {
+            // 👇 YAHAN CHANGE KIYA HAI: Removed 
+            const res = await fetch('/api/auth/register-admin', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(pendingPayload)
@@ -58,11 +56,9 @@ export default function UpgradePlan() {
 
             alert(`🎉 Success! Account created for ${pendingPayload.companyName}.\nPlan: ${planName} (₹${amount})`);
 
-            // Safe memory teardown cleanup operations
             localStorage.removeItem('pendingAdminData');
             localStorage.setItem('hasPaidTier', 'true');
 
-            // Redirect smoothly to your unified Login gateway view node
             navigate('/');
 
         } catch (err) {

@@ -33,19 +33,19 @@ export default function AdminDashboard() {
     const fetchAdminDashboardMetrics = async () => {
         const token = localStorage.getItem('authToken');
         try {
-            const employeesRes = await fetch('http://localhost:5000/api/employees', {
+            const employeesRes = await fetch('/api/employees', {
                 method: 'GET',
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
             });
             const employeesData = await employeesRes.json();
 
-            const configRes = await fetch('http://localhost:5000/api/employees/profile', {
+            const configRes = await fetch('/api/employees/profile', {
                 method: 'GET',
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
             });
             const configData = await configRes.json();
 
-            const leavesRes = await fetch('http://localhost:5000/api/leaves/pending-reviews', {
+            const leavesRes = await fetch('/api/leaves/pending-reviews', {
                 method: 'GET',
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
             });
@@ -103,7 +103,7 @@ export default function AdminDashboard() {
     const handleToggleHrLeavePower = async (checkedState) => {
         const token = localStorage.getItem('authToken');
         try {
-            const res = await fetch('http://localhost:5000/api/leaves/toggle-hr-power', {
+            const res = await fetch('/api/leaves/toggle-hr-power', {
                 method: 'PATCH',
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ enablePower: checkedState })

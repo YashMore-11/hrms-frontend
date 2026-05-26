@@ -13,7 +13,7 @@ export default function HRDashboard() {
     const [error, setError] = useState('');
 
     const token = localStorage.getItem('authToken');
-    const API_BASE_URL = 'http://localhost:5000/api';
+    const API_BASE_URL = '/api';
 
     // Fallback Mock Datasets to ensure zero UI disruption during backend 404s
     const fallbackAttendance = {

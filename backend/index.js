@@ -10,12 +10,23 @@ require('dotenv').config();
 // 🚀 APP INITIALIZATION
 // ==========================================
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // ==========================================
 // 🛡️ GLOBAL MIDDLEWARE LAYER REGISTER
 // ==========================================
-app.use(cors());
+// 1. Tracker Middleware (Ye terminal me batayega ki request aayi ya nahi)
+app.use((req, res, next) => {
+    console.log(`[NETWORK TRACKER] Method: ${req.method} | URL: ${req.url} | Origin: ${req.headers.origin}`);
+    next();
+});
+
+// 2. The Ultimate CORS Fix (Ye automatically frontend ka address detect karke allow karega)
+app.use(cors({
+    origin: true, 
+    credentials: true
+}));
+
 app.use(express.json());
 
 // ==========================================

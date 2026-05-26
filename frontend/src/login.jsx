@@ -16,7 +16,8 @@ function EmployeeLogin({ onLoginStart, onLoginSuccess, onLoginError }) {
     onLoginStart();
 
     try {
-      const res = await fetch('http://localhost:5000/api/auth/login', {
+      // 👇 CHANGE 1: Removed 
+      const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, role: 'employee' }),
@@ -66,7 +67,7 @@ function EmployeeLogin({ onLoginStart, onLoginSuccess, onLoginError }) {
 // 2. ADMIN LOGIN COMPONENT
 // ==========================================
 function AdminLogin({ onLoginStart, onLoginSuccess, onLoginError }) {
-  const navigate = useNavigate(); // ✅ Hook to navigate to your external admin signup page
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -75,7 +76,8 @@ function AdminLogin({ onLoginStart, onLoginSuccess, onLoginError }) {
     onLoginStart();
 
     try {
-      const res = await fetch('http://localhost:5000/api/auth/login', {
+      // 👇 CHANGE 2: Removed 
+      const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, role: 'admin' }),
@@ -120,7 +122,6 @@ function AdminLogin({ onLoginStart, onLoginSuccess, onLoginError }) {
           Login
         </button>
 
-        {/* ✅ Routes user directly to your cool separate registration view component */}
         <button
           type="button"
           onClick={() => navigate('/admin/signup')}
@@ -145,7 +146,8 @@ function SuperAdminLogin({ onLoginStart, onLoginSuccess, onLoginError }) {
     onLoginStart();
 
     try {
-      const res = await fetch('http://localhost:5000/api/auth/login', {
+      // 👇 CHANGE 3: Removed 
+      const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, role: 'superadmin' }),
@@ -225,7 +227,7 @@ export default function LoginGateway() {
     localStorage.setItem('userRole', role);
 
     if (role === 'employee') {
-      navigate('/employee/profile'); // Fixed syntax typo here from /pofile
+      navigate('/employee/profile'); 
     } else if (role === 'hr') {
       navigate('/hr/profile');
     } else if (role === 'admin') {

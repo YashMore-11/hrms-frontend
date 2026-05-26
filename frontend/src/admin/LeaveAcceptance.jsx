@@ -22,7 +22,7 @@ export default function LeaveDeskReview() {
         const token = localStorage.getItem('authToken');
         try {
             // Hitting your custom pending reviews router channel endpoint
-            const res = await fetch('http://localhost:5000/api/leaves/pending-reviews', {
+            const res = await fetch('/api/leaves/pending-reviews', {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -77,7 +77,7 @@ export default function LeaveDeskReview() {
 
         const token = localStorage.getItem('authToken');
         try {
-            const res = await fetch(`http://localhost:5000/api/leaves/action/${id}`, {
+            const res = await fetch(`/api/leaves/action/${id}`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`,

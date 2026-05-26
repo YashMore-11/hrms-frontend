@@ -37,7 +37,7 @@ export default function HRProfile() {
     const token = localStorage.getItem('authToken');
 
     try {
-      const res = await fetch('http://localhost:5000/api/employees/profile', {
+      const res = await fetch('/api/employees/profile', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -114,7 +114,7 @@ export default function HRProfile() {
     };
 
     try {
-      const res = await fetch('http://localhost:5000/api/employees/profile', {
+      const res = await fetch('/api/employees/profile', {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -158,7 +158,7 @@ export default function HRProfile() {
       return;
     }
     // Hits the static express upload directory route configured on your backend
-    window.open(`http://localhost:5000/uploads/${filename}`, '_blank');
+    window.open(`/uploads/${filename}`, '_blank');
   };
 
   if (isLoading) {

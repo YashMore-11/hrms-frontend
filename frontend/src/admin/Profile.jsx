@@ -39,7 +39,7 @@ export default function AdminProfile() {
         setIsLoading(true);
         const token = localStorage.getItem('authToken');
         try {
-            const profileRes = await fetch('http://localhost:5000/api/auth/admin-profile', {
+            const profileRes = await fetch('/api/auth/admin-profile', {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -50,7 +50,7 @@ export default function AdminProfile() {
 
             if (!profileRes.ok) throw new Error(profile.message || "Failed to load admin profile.");
 
-            const employeeRes = await fetch('http://localhost:5000/api/employees', {
+            const employeeRes = await fetch('/api/employees', {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -175,7 +175,7 @@ export default function AdminProfile() {
         };
 
         try {
-            const res = await fetch('http://localhost:5000/api/auth/admin-profile', {
+            const res = await fetch('/api/auth/admin-profile', {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`,
