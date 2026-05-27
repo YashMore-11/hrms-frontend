@@ -4,6 +4,8 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, Legend, ResponsiveContainer,
     PieChart, Pie, Cell 
 } from 'recharts';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export default function SuperAdminDashboard() {
     const navigate = useNavigate();
@@ -46,7 +48,7 @@ export default function SuperAdminDashboard() {
             fetchCompanies();
             fetchBillingStats();
         }
-        else if (activeTab === 'billing') fetchBillingStats();
+        else if (activeTab === 'billing') { fetchBillingStats(); fetchCompanies(); }
         else if (activeTab === 'users') fetchUsers();
         else if (activeTab === 'support') fetchTickets();
         else if (activeTab === 'settings') fetchSettings();
@@ -135,27 +137,47 @@ export default function SuperAdminDashboard() {
             if (res.ok) { fetchCompanies(); fetchBillingStats(); } } catch (error) { alert("Delete failed!"); }
     };
     
-    // 🥷 1. NAYA FUNCTION: IMPERSONATE (GOD MODE)
     const handleImpersonate = async (id, companyName) => {
         if (!window.confirm(`⚠️ WARNING: Are you sure you want to securely log in as the HR Admin of ${companyName}?`)) return;
-        
         try {
             const res = await fetch(`/api/superadmin/companies/${id}/impersonate`, { method: 'POST' });
             const data = await res.json();
-            
             if (res.ok) {
-                // Team ke logic ke hisaab se Token aur Role save kar rahe hain
                 localStorage.setItem('authToken', data.token);
                 localStorage.setItem('userRole', data.role);
                 alert(`✅ Access Granted!\nRedirecting to ${companyName} HR Dashboard...`);
-                // Seedha uss HR wale panel par bhej do
                 navigate('/admin/Profile');
-            } else {
-                alert(data.message || "Impersonation Failed!");
-            }
-        } catch (error) {
-            alert("Network Error during impersonation.");
-        }
+            } else { alert(data.message || "Impersonation Failed!"); }
+        } catch (error) { alert("Network Error during impersonation."); }
+    };
+
+    const handleGenerateInvoice = (comp) => {
+        const doc = new jsPDF();
+        doc.setFontSize(22); doc.setTextColor(79, 70, 229); doc.text("SaaS Enterprise Platform", 14, 20);
+        doc.setFontSize(10); doc.setTextColor(100); doc.text("TAX INVOICE", 14, 30); doc.text(`Invoice Number: INV-${Math.floor(Math.random() * 900000) + 100000}`, 14, 36); doc.text(`Billing Date: ${new Date().toLocaleDateString()}`, 14, 42);
+        doc.setFontSize(12); doc.setTextColor(0); doc.text("Billed To:", 14, 55);
+        doc.setFontSize(10); doc.setTextColor(100); doc.text(`Company: ${comp.companyName}`, 14, 62); doc.text(`Email: ${comp.adminEmail}`, 14, 68); doc.text(`GSTIN: ${comp.gstNumber || 'Unregistered Entity'}`, 14, 74);
+        
+        let basePrice = 0;
+        if(comp.subscriptionPlan === 'Starter') basePrice = 999;
+        if(comp.subscriptionPlan === 'Business') basePrice = 2499;
+        if(comp.subscriptionPlan === 'Enterprise') basePrice = 4999;
+        
+        const gstAmount = basePrice * 0.18; const totalAmount = basePrice + gstAmount;
+
+        // 📊 NAYA SAFE AUTOTABLE CODE
+        autoTable(doc, {
+            startY: 85,
+            head: [['Description', 'Billing Cycle', 'Amount (INR)']],
+            body: [[`Software License - ${comp.subscriptionPlan} Tier`, 'Monthly', `Rs. ${basePrice.toFixed(2)}`], ['Platform IGST (18%)', '-', `Rs. ${gstAmount.toFixed(2)}`]],
+            foot: [['Total Payable Amount', '', `Rs. ${totalAmount.toFixed(2)}`]],
+            theme: 'grid', 
+            headStyles: { fillColor: [30, 27, 75] }, 
+            footStyles: { fillColor: [243, 244, 246], textColor: [0,0,0], fontStyle: 'bold' }
+        });
+
+        doc.setFontSize(9); doc.setTextColor(150); doc.text("This is a system-generated electronic invoice and requires no physical signature.", 14, doc.lastAutoTable.finalY + 20); doc.text("Thank you for choosing our Enterprise Platform.", 14, doc.lastAutoTable.finalY + 26);
+        doc.save(`Invoice_${comp.companyName.replace(/\s+/g, '_')}_${new Date().getMonth()+1}Y26.pdf`);
     };
 
     const handleResolveTicket = async (id) => {
@@ -166,7 +188,7 @@ export default function SuperAdminDashboard() {
     const handleSaveSettings = async (e) => {
         e.preventDefault(); setSavingSettings(true);
         try { const res = await fetch('/api/superadmin/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(settings) });
-            if (res.ok) alert("⚙️ System Settings Updated Globally!"); } catch (error) { alert("Settings save error!"); } finally { setSavingSettings(false); }
+            if (res.ok) alert("⚙️ Core Platform Configurations Updated Globally!"); } catch (error) { alert("Settings save error!"); } finally { setSavingSettings(false); }
     };
 
     const handleLogout = () => { localStorage.clear(); navigate('/'); };
@@ -187,30 +209,14 @@ export default function SuperAdminDashboard() {
         }
     };
 
-    // ==========================================
-    // 📊 100% CRASH-PROOF CHART DATA
-    // ==========================================
     const pieColors = ['#94a3b8', '#3b82f6', '#8b5cf6', '#10b981']; 
     const safePlanCounts = billingStats?.planCounts || {};
     const safeCompanies = companies || [];
     const safeTotalRevenue = billingStats?.totalRevenue || 0;
-
-    const planData = Object.keys(safePlanCounts).map((key) => ({
-        name: key,
-        value: safePlanCounts[key]
-    })).filter(item => item.value > 0); 
-
-    const statusCounts = safeCompanies.reduce((acc, comp) => {
-        if(comp && comp.status) {
-            acc[comp.status] = (acc[comp.status] || 0) + 1;
-        }
-        return acc;
-    }, {});
-    
-    const statusData = Object.keys(statusCounts).map(key => ({
-        name: key,
-        count: statusCounts[key]
-    }));
+    const paidCompanies = safeCompanies.filter(c => c.subscriptionPlan && c.subscriptionPlan !== 'Free Trial');
+    const planData = Object.keys(safePlanCounts).map((key) => ({ name: key, value: safePlanCounts[key] })).filter(item => item.value > 0); 
+    const statusCounts = safeCompanies.reduce((acc, comp) => { if(comp && comp.status) { acc[comp.status] = (acc[comp.status] || 0) + 1; } return acc; }, {});
+    const statusData = Object.keys(statusCounts).map(key => ({ name: key, count: statusCounts[key] }));
 
     return (
         <div className="min-h-screen bg-gray-50 p-6 font-sans relative">
@@ -320,17 +326,11 @@ export default function SuperAdminDashboard() {
                                                 <td className="p-4"><p className="text-xs"><span className="font-bold">GST:</span> {comp.gstNumber || 'N/A'}</p><p className="text-xs"><span className="font-bold">PAN:</span> {comp.panNumber || 'N/A'}</p></td>
                                                 <td className="p-4"><span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border ${getStatusBadge(comp.status)}`}>{comp.status}</span></td>
                                                 <td className="p-4 flex flex-wrap gap-2 justify-center">
-                                                    
-                                                    {/* 🥷 2. NAYA BUTTON: IMPERSONATE */}
                                                     {comp.status === 'Active' && (
-                                                        <button 
-                                                            onClick={() => handleImpersonate(comp._id, comp.companyName)} 
-                                                            className="bg-purple-100 hover:bg-purple-200 text-purple-700 px-3 py-1 rounded-lg text-xs font-black shadow-sm transition-all border border-purple-200 flex items-center gap-1"
-                                                        >
+                                                        <button onClick={() => handleImpersonate(comp._id, comp.companyName)} className="bg-purple-100 hover:bg-purple-200 text-purple-700 px-3 py-1 rounded-lg text-xs font-black shadow-sm transition-all border border-purple-200 flex items-center gap-1">
                                                             👁️ Login As
                                                         </button>
                                                     )}
-
                                                     {comp.status === 'Pending Approval' && <button onClick={() => handleStatusChange(comp._id, 'Active')} className="bg-emerald-50 text-emerald-700 px-2 py-1 rounded-lg text-xs font-bold border border-emerald-200">Approve</button>}
                                                     {comp.status === 'Active' && <button onClick={() => handleStatusChange(comp._id, 'Suspended')} className="bg-orange-50 text-orange-700 px-2 py-1 rounded-lg text-xs font-bold">Suspend</button>}
                                                     {comp.status === 'Suspended' && <button onClick={() => handleStatusChange(comp._id, 'Active')} className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded-lg text-xs font-bold">Activate</button>}
@@ -362,7 +362,6 @@ export default function SuperAdminDashboard() {
                                             </div>
                                         </div>
                                         <div className="flex flex-col gap-2 border-t pt-3 border-gray-100">
-                                            {/* 🥷 IMPERSONATE BUTTON IN GRID VIEW */}
                                             {comp.status === 'Active' && (
                                                 <button onClick={() => handleImpersonate(comp._id, comp.companyName)} className="w-full bg-purple-100 hover:bg-purple-200 text-purple-700 font-black px-3 py-2 rounded-lg text-xs transition-colors border border-purple-200 mb-1">
                                                     👁️ Login As HR Admin
@@ -381,7 +380,7 @@ export default function SuperAdminDashboard() {
                 </div>
             )}
 
-            {/* TAB 2: BILLING */}
+            {/* TAB 2: BILLING WITH PDF INVOICES */}
             {activeTab === 'billing' && (
                 <div className="animate-fadeIn space-y-6">
                     <div className="bg-gradient-to-br from-indigo-950 to-black p-10 rounded-3xl shadow-xl text-white relative overflow-hidden flex flex-col md:flex-row justify-between items-center gap-8">
@@ -396,6 +395,39 @@ export default function SuperAdminDashboard() {
                             <button onClick={handleTestPayment} className="bg-white text-indigo-900 hover:bg-gray-100 font-black px-6 py-3.5 rounded-xl shadow-lg hover:scale-105 transition-all flex items-center gap-2 w-full justify-center">
                                 💳 Test Checkout Flow
                             </button>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div className="p-6 border-b border-gray-100">
+                            <h2 className="text-lg font-black text-gray-900">Subscription Ledgers & Invoices</h2>
+                            <p className="text-xs text-gray-500 mt-1">Generate automated tax invoices for active enterprise clients.</p>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="bg-gray-50 text-gray-500 text-[10px] uppercase font-bold border-b border-gray-200">
+                                        <th className="p-4">Billed Entity</th>
+                                        <th className="p-4">Subscription Plan</th>
+                                        <th className="p-4">Status</th>
+                                        <th className="p-4 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {paidCompanies.length === 0 ? (
+                                        <tr><td colSpan="4" className="p-8 text-center text-gray-400 font-medium">No active paid subscriptions found.</td></tr>
+                                    ) : (
+                                        paidCompanies.map((comp, idx) => (
+                                            <tr key={idx} className="border-b border-gray-50 hover:bg-gray-50/50">
+                                                <td className="p-4"><p className="font-black text-gray-900">{comp.companyName}</p><p className="text-xs text-gray-500">GST: {comp.gstNumber || 'N/A'}</p></td>
+                                                <td className="p-4"><span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-black">{comp.subscriptionPlan}</span></td>
+                                                <td className="p-4"><span className="text-emerald-600 text-xs font-bold">● Cleared</span></td>
+                                                <td className="p-4 text-right"><button onClick={() => handleGenerateInvoice(comp)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-sm transition-all">📄 Download PDF</button></td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -449,11 +481,13 @@ export default function SuperAdminDashboard() {
                 </div>
             )}
 
-            {/* TAB 5: SYSTEM SETTINGS */}
+            {/* TAB 5: SYSTEM SETTINGS WITH LEGAL & COMPLIANCE ENGINE */}
             {activeTab === 'settings' && (
                 <div className="animate-fadeIn max-w-4xl">
                     {settings && (
                         <form onSubmit={handleSaveSettings} className="space-y-6">
+                            
+                            {/* 1. Maintenance Mode */}
                             <div className="bg-white p-8 rounded-2xl border border-red-100 shadow-sm">
                                 <div className="flex justify-between items-start mb-6">
                                     <div><h2 className="text-xl font-black text-gray-900">🛑 Emergency Maintenance</h2><p className="text-sm text-gray-500 mt-1">Locks all operations nodes instantly.</p></div>
@@ -464,6 +498,8 @@ export default function SuperAdminDashboard() {
                                 </div>
                                 {settings.maintenanceMode && <textarea value={settings.maintenanceMessage} onChange={(e) => setSettings({...settings, maintenanceMessage: e.target.value})} className="w-full p-4 rounded-xl border border-red-200 text-sm outline-none focus:ring-2 focus:ring-red-100" rows="3" />}
                             </div>
+                            
+                            {/* 2. Feature Flags */}
                             <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
                                 <h2 className="text-xl font-black text-gray-900 mb-6">🧩 Global Feature Flag Controllers</h2>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -478,6 +514,32 @@ export default function SuperAdminDashboard() {
                                     ))}
                                 </div>
                             </div>
+
+                            {/* 3. NEW: LEGAL & POLICY ENGINE */}
+                            <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
+                                <h2 className="text-xl font-black text-gray-900 mb-6">⚖️ Legal & Compliance Documents</h2>
+                                <div className="space-y-6">
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-2">Platform Terms & Conditions</label>
+                                        <textarea 
+                                            value={settings.termsAndConditions || ''} 
+                                            onChange={(e) => setSettings({...settings, termsAndConditions: e.target.value})} 
+                                            className="w-full p-4 rounded-xl border border-gray-300 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 min-h-[120px]" 
+                                            placeholder="Enter global terms and conditions for all client tenants..." 
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-2">Global Privacy Policy</label>
+                                        <textarea 
+                                            value={settings.privacyPolicy || ''} 
+                                            onChange={(e) => setSettings({...settings, privacyPolicy: e.target.value})} 
+                                            className="w-full p-4 rounded-xl border border-gray-300 text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 min-h-[120px]" 
+                                            placeholder="Enter SaaS privacy policy rules..." 
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
                             <button type="submit" disabled={savingSettings} className="bg-indigo-950 hover:bg-indigo-900 transition-colors text-white font-black px-8 py-4 rounded-xl shadow-lg w-full">{savingSettings ? "Updating Environment..." : "Save Production Matrix"}</button>
                         </form>
                     )}

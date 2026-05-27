@@ -285,8 +285,10 @@ router.post('/create-payment', async (req, res) => {
 });
 
 // ==========================================
-// 🕵️‍♂️ POST: Impersonate Company Admin (God Mode)
+// 🕵️‍♂️ POST: Impersonate Company Admin (God Mode v2)
 // ==========================================
+// 🔗 Aapke team ke Admin model ko import kar rahe hain
+
 router.post('/companies/:id/impersonate', async (req, res) => {
     try {
         const company = await Company.findById(req.params.id);
@@ -295,17 +297,37 @@ router.post('/companies/:id/impersonate', async (req, res) => {
             return res.status(404).json({ message: "Company database mein nahi mili!" });
         }
 
-        // Agar company blacklisted hai toh usme login mat karne do
         if (company.status === 'Blacklisted') {
             return res.status(403).json({ message: "Cannot impersonate a Blacklisted company!" });
         }
 
-        // 🪄 MAGIC: Bina password ke HR Admin ka token generate kar rahe hain
-        // Note: Aapke doston ne auth.js mein HR ka role 'admin' rakha hai, toh hum bhi wahi use karenge
+        // 🔍 1. Check karo ki Team ke Admin Database mein iska HR exist karta hai ya nahi
+        let hrAdmin = await Admin.findOne({ email: company.adminEmail });
+        
+        // 🛠️ 2. THE MASTERSTROKE: Agar HR exist nahi karta, toh auto-create kar do!
+        if (!hrAdmin) {
+            hrAdmin = new Admin({
+                adminId: `HR-${Math.floor(Math.random() * 10000)}`,
+                name: `${company.companyName} HR (System Auto)`,
+                email: company.adminEmail,
+                password: company.password, // SuperAdmin wala hash password use kar rahe hain
+                companyName: company.companyName,
+                phone: company.phone || "0000000000",
+                panId: company.panNumber || "PENDING",
+                gstId: company.gstNumber || "PENDING",
+                hasPaidTier: true,
+                selectedPlanName: company.subscriptionPlan || 'Free Trial',
+                planPrice: '0'
+            });
+            await hrAdmin.save();
+            console.log("📍 [God Mode]: Auto-provisioned missing HR Admin profile in Team Database.");
+        }
+
+        // 🪄 3. MAGIC: Ab Asli Admin ID se naya token generate karo
         const token = jwt.sign(
-            { id: company._id, role: 'admin', email: company.adminEmail },
-            JWT_SECRET,
-            { expiresIn: '2h' } // 2 ghante baad session apne aap expire ho jayega
+            { id: hrAdmin._id, role: 'admin', email: hrAdmin.email },
+            process.env.JWT_SECRET || "HRMS_SUPER_SECRET_KEY@_123",
+            { expiresIn: '2h' } 
         );
 
         res.status(200).json({ 
@@ -315,6 +337,7 @@ router.post('/companies/:id/impersonate', async (req, res) => {
         });
 
     } catch (err) {
+        console.error("Impersonate Error:", err);
         res.status(500).json({ message: "Impersonation API crashed", error: err.message });
     }
 });
