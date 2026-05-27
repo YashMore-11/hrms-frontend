@@ -9,6 +9,9 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const Razorpay = require('razorpay');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const JWT_SECRET = process.env.JWT_SECRET || "HRMS_SUPER_SECRET_KEY@_123";
 
 // Razorpay Instance (Aap apne asli Test Keys Razorpay Dashboard se nikal kar yahan daal sakte ho baad mein)
 const razorpayInstance = new Razorpay({
@@ -74,8 +77,9 @@ router.delete('/companies/:id', async (req, res) => {
         res.status(500).json({ message: "Delete karne mein error aaya", error: err.message });
     }
 });
+
 // ==========================================
-// ➕ 4. POST: Nayi Company Register karna (WITH IMAGE UPLOAD)
+// ➕ 4. POST: Nayi Company Register karna (WITH PASSWORD GENERATION)
 // ==========================================
 router.post('/companies', upload.single('logo'), async (req, res) => {
     try {
@@ -87,15 +91,22 @@ router.post('/companies', upload.single('logo'), async (req, res) => {
             return res.status(400).json({ message: "Is email se company already registered hai!" });
         }
 
-        // 2. Data copy karo
-        const companyData = { ...req.body };
+        // 🔐 2. Naya Password ko encrypt (hash) karo
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash('Admin@123', salt); // Default Password for new companies
+
+        // 3. Data copy karo aur password attach karo
+        const companyData = { 
+            ...req.body,
+            password: hashedPassword // Encrypted password ab database mein jayega
+        };
         
-        // 3. Agar nayi image upload hui hai, toh uska rasta save karo
+        // 4. Logo attach karo agar hai
         if (req.file) {
             companyData.logo = `/uploads/${req.file.filename}`;
         }
 
-        // 4. Save kar do
+        // 5. Save kar do
         const newCompany = new Company(companyData);
         await newCompany.save();
         
@@ -270,6 +281,41 @@ router.post('/create-payment', async (req, res) => {
         res.status(200).json({ success: true, order });
     } catch (err) {
         res.status(500).json({ message: "Razorpay order creation failed", error: err.message });
+    }
+});
+
+// ==========================================
+// 🕵️‍♂️ POST: Impersonate Company Admin (God Mode)
+// ==========================================
+router.post('/companies/:id/impersonate', async (req, res) => {
+    try {
+        const company = await Company.findById(req.params.id);
+        
+        if (!company) {
+            return res.status(404).json({ message: "Company database mein nahi mili!" });
+        }
+
+        // Agar company blacklisted hai toh usme login mat karne do
+        if (company.status === 'Blacklisted') {
+            return res.status(403).json({ message: "Cannot impersonate a Blacklisted company!" });
+        }
+
+        // 🪄 MAGIC: Bina password ke HR Admin ka token generate kar rahe hain
+        // Note: Aapke doston ne auth.js mein HR ka role 'admin' rakha hai, toh hum bhi wahi use karenge
+        const token = jwt.sign(
+            { id: company._id, role: 'admin', email: company.adminEmail },
+            JWT_SECRET,
+            { expiresIn: '2h' } // 2 ghante baad session apne aap expire ho jayega
+        );
+
+        res.status(200).json({ 
+            message: `Successfully logged in as ${company.companyName} HR!`,
+            token: token,
+            role: 'admin'
+        });
+
+    } catch (err) {
+        res.status(500).json({ message: "Impersonation API crashed", error: err.message });
     }
 });
 // Settings update karna (Maintenance Mode & Modules)

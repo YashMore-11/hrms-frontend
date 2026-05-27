@@ -1,12 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { 
+    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, Legend, ResponsiveContainer,
+    PieChart, Pie, Cell 
+} from 'recharts';
 
 export default function SuperAdminDashboard() {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState('companies');
+    
+    // 🎛️ Tabs & Views
+    const [activeTab, setActiveTab] = useState('analytics');
     const [viewMode, setViewMode] = useState('list'); 
 
-    // States
+    // Core States
     const [companies, setCompanies] = useState([]);
     const [billingStats, setBillingStats] = useState({ totalRevenue: 0, planCounts: {} });
     const [users, setUsers] = useState([]);
@@ -21,7 +27,7 @@ export default function SuperAdminDashboard() {
     const [loadingSettings, setLoadingSettings] = useState(false);
     const [savingSettings, setSavingSettings] = useState(false);
 
-    // 🏢 Modal & Form States (100% COMPLETE)
+    // 🏢 Modal States
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
     const [selectedCompanyId, setSelectedCompanyId] = useState(null);
@@ -36,7 +42,10 @@ export default function SuperAdminDashboard() {
     });
 
     useEffect(() => {
-        if (activeTab === 'companies') fetchCompanies();
+        if (activeTab === 'companies' || activeTab === 'analytics') {
+            fetchCompanies();
+            fetchBillingStats();
+        }
         else if (activeTab === 'billing') fetchBillingStats();
         else if (activeTab === 'users') fetchUsers();
         else if (activeTab === 'support') fetchTickets();
@@ -49,27 +58,27 @@ export default function SuperAdminDashboard() {
     const fetchCompanies = async () => {
         setLoadingCompanies(true);
         try { const res = await fetch('/api/superadmin/companies'); if (res.ok) setCompanies(await res.json()); } 
-        catch (error) { console.error("Error:", error); } finally { setLoadingCompanies(false); }
+        catch (error) { console.error("Error fetching companies:", error); } finally { setLoadingCompanies(false); }
     };
     const fetchBillingStats = async () => {
         setLoadingBilling(true);
         try { const res = await fetch('/api/superadmin/billing-stats'); if (res.ok) setBillingStats(await res.json()); } 
-        catch (error) { console.error("Error:", error); } finally { setLoadingBilling(false); }
+        catch (error) { console.error("Error fetching billing:", error); } finally { setLoadingBilling(false); }
     };
     const fetchUsers = async () => {
         setLoadingUsers(true);
         try { const res = await fetch('/api/superadmin/users'); if (res.ok) setUsers(await res.json()); } 
-        catch (error) { console.error("Error:", error); } finally { setLoadingUsers(false); }
+        catch (error) { console.error("Error fetching users:", error); } finally { setLoadingUsers(false); }
     };
     const fetchTickets = async () => {
         setLoadingTickets(true);
         try { const res = await fetch('/api/superadmin/tickets'); if (res.ok) setTickets(await res.json()); } 
-        catch (error) { console.error("Error:", error); } finally { setLoadingTickets(false); }
+        catch (error) { console.error("Error fetching tickets:", error); } finally { setLoadingTickets(false); }
     };
     const fetchSettings = async () => {
         setLoadingSettings(true);
         try { const res = await fetch('/api/superadmin/settings'); if (res.ok) setSettings(await res.json()); } 
-        catch (error) { console.error("Error:", error); } finally { setLoadingSettings(false); }
+        catch (error) { console.error("Error fetching settings:", error); } finally { setLoadingSettings(false); }
     };
 
     // ==========================================
@@ -97,6 +106,7 @@ export default function SuperAdminDashboard() {
                     subscriptionPlan: 'Free Trial'
                 });
                 fetchCompanies();
+                fetchBillingStats();
             } else alert(responseData.message || "Operation failed");
         } catch (error) { alert("Server processing error!"); }
     };
@@ -116,15 +126,38 @@ export default function SuperAdminDashboard() {
     const handleStatusChange = async (id, newStatus) => {
         if (newStatus === 'Blacklisted' && !window.confirm("WARNING: Blacklist this company?")) return;
         try { const res = await fetch(`/api/superadmin/companies/${id}/status`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: newStatus }) });
-            if (res.ok) fetchCompanies(); } catch (error) { alert("Status update failed!"); }
+            if (res.ok) { fetchCompanies(); fetchBillingStats(); } } catch (error) { alert("Status update failed!"); }
     };
 
     const handleDelete = async (id) => {
         if (!window.confirm("CRITICAL: This will permanently delete the company instance. Proceed?")) return;
         try { const res = await fetch(`/api/superadmin/companies/${id}`, { method: 'DELETE' });
-            if (res.ok) fetchCompanies(); } catch (error) { alert("Delete failed!"); }
+            if (res.ok) { fetchCompanies(); fetchBillingStats(); } } catch (error) { alert("Delete failed!"); }
     };
     
+    // 🥷 1. NAYA FUNCTION: IMPERSONATE (GOD MODE)
+    const handleImpersonate = async (id, companyName) => {
+        if (!window.confirm(`⚠️ WARNING: Are you sure you want to securely log in as the HR Admin of ${companyName}?`)) return;
+        
+        try {
+            const res = await fetch(`/api/superadmin/companies/${id}/impersonate`, { method: 'POST' });
+            const data = await res.json();
+            
+            if (res.ok) {
+                // Team ke logic ke hisaab se Token aur Role save kar rahe hain
+                localStorage.setItem('authToken', data.token);
+                localStorage.setItem('userRole', data.role);
+                alert(`✅ Access Granted!\nRedirecting to ${companyName} HR Dashboard...`);
+                // Seedha uss HR wale panel par bhej do
+                navigate('/admin/Profile');
+            } else {
+                alert(data.message || "Impersonation Failed!");
+            }
+        } catch (error) {
+            alert("Network Error during impersonation.");
+        }
+    };
+
     const handleResolveTicket = async (id) => {
         try { const res = await fetch(`/api/superadmin/tickets/${id}/status`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'Resolved' }) });
             if (res.ok) fetchTickets(); } catch (error) { alert("Ticket resolve failed!"); }
@@ -138,16 +171,9 @@ export default function SuperAdminDashboard() {
 
     const handleLogout = () => { localStorage.clear(); navigate('/'); };
 
-    // ==========================================
-    // 💳 RAZORPAY DEMO FIX
-    // ==========================================
     const handleTestPayment = async () => {
-        // Since backend fails without real keys, we use a Demo Alert for presentation purposes
-        // Agar real keys hongi toh Razorpay ka code yahan aayega.
         if (window.confirm("Simulate Razorpay Gateway Request? \n(Click OK to view Demo Success)")) {
-            setTimeout(() => {
-                alert(`✅ Payment Processed Successfully! \nTransaction ID: pay_test_${Math.floor(Math.random() * 100000000)}\n\n(Note: Connect real keys in backend for actual pop-up)`);
-            }, 1000);
+            setTimeout(() => { alert(`✅ Payment Processed Successfully! \nTransaction ID: pay_test_${Math.floor(Math.random() * 100000000)}\n\n(Note: Connect real keys in backend for actual pop-up)`); }, 1000);
         }
     };
 
@@ -160,6 +186,31 @@ export default function SuperAdminDashboard() {
             default: return 'bg-gray-100 text-gray-700';
         }
     };
+
+    // ==========================================
+    // 📊 100% CRASH-PROOF CHART DATA
+    // ==========================================
+    const pieColors = ['#94a3b8', '#3b82f6', '#8b5cf6', '#10b981']; 
+    const safePlanCounts = billingStats?.planCounts || {};
+    const safeCompanies = companies || [];
+    const safeTotalRevenue = billingStats?.totalRevenue || 0;
+
+    const planData = Object.keys(safePlanCounts).map((key) => ({
+        name: key,
+        value: safePlanCounts[key]
+    })).filter(item => item.value > 0); 
+
+    const statusCounts = safeCompanies.reduce((acc, comp) => {
+        if(comp && comp.status) {
+            acc[comp.status] = (acc[comp.status] || 0) + 1;
+        }
+        return acc;
+    }, {});
+    
+    const statusData = Object.keys(statusCounts).map(key => ({
+        name: key,
+        count: statusCounts[key]
+    }));
 
     return (
         <div className="min-h-screen bg-gray-50 p-6 font-sans relative">
@@ -174,23 +225,72 @@ export default function SuperAdminDashboard() {
 
             {/* 🗂️ Tabs */}
             <div className="flex flex-wrap gap-2 mb-8 bg-white p-2 rounded-2xl shadow-sm border border-gray-100 w-fit">
-                <button onClick={() => setActiveTab('companies')} className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'companies' ? 'bg-indigo-950 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}>🏢 Companies</button>
-                <button onClick={() => setActiveTab('billing')} className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'billing' ? 'bg-indigo-950 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}>💳 Billing</button>
+                <button onClick={() => setActiveTab('analytics')} className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'analytics' ? 'bg-indigo-950 text-white shadow-md transform scale-105' : 'text-gray-500 hover:bg-gray-50'}`}>📊 Analytics</button>
+                <button onClick={() => setActiveTab('companies')} className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'companies' ? 'bg-indigo-950 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}>🏢 Registry</button>
+                <button onClick={() => setActiveTab('billing')} className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'billing' ? 'bg-indigo-950 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}>💳 Revenue</button>
                 <button onClick={() => setActiveTab('users')} className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'users' ? 'bg-indigo-950 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}>👥 Global Users</button>
                 <button onClick={() => setActiveTab('support')} className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'support' ? 'bg-indigo-950 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}>🎟️ Helpdesk</button>
-                <button onClick={() => setActiveTab('settings')} className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'settings' ? 'bg-indigo-950 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}>⚙️ Settings</button>
+                <button onClick={() => setActiveTab('settings')} className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'settings' ? 'bg-indigo-950 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}>⚙️ Core</button>
             </div>
+
+            {/* TAB 0: 📊 ANALYTICS DASHBOARD */}
+            {activeTab === 'analytics' && (
+                <div className="animate-fadeIn space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                        <div className="bg-gradient-to-br from-indigo-900 to-indigo-950 p-6 rounded-2xl shadow-lg text-white">
+                            <p className="text-xs font-bold text-indigo-300 uppercase tracking-widest mb-1">Total Network MRR</p>
+                            <h2 className="text-4xl font-black">₹{safeTotalRevenue.toLocaleString('en-IN')}</h2>
+                        </div>
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Total Active Nodes</p>
+                            <h2 className="text-4xl font-black text-gray-900">{safeCompanies.filter(c => c?.status === 'Active').length}</h2>
+                        </div>
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Total Registrations</p>
+                            <h2 className="text-4xl font-black text-gray-900">{safeCompanies.length}</h2>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                            <h3 className="text-lg font-black text-gray-900 mb-6">Subscription Distribution</h3>
+                            {planData.length === 0 ? <div className="h-64 flex items-center justify-center text-gray-400 font-medium">Insufficient data</div> : (
+                                <div className="h-72">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <PieChart>
+                                            <Pie data={planData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value">
+                                                {planData.map((entry, index) => <Cell key={`cell-${index}`} fill={pieColors[index % pieColors.length]} />)}
+                                            </Pie>
+                                            <ChartTooltip contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                                            <Legend verticalAlign="bottom" height={36}/>
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            )}
+                        </div>
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                            <h3 className="text-lg font-black text-gray-900 mb-6">Client Health Metrics</h3>
+                            {statusData.length === 0 ? <div className="h-64 flex items-center justify-center text-gray-400 font-medium">Insufficient data</div> : (
+                                <div className="h-72">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={statusData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                            <XAxis dataKey="name" tick={{ fontSize: 12, fontWeight: 600, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                                            <YAxis tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} allowDecimals={false} />
+                                            <ChartTooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                                            <Bar dataKey="count" fill="#4f46e5" radius={[6, 6, 0, 0]} barSize={40} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* TAB 1: COMPANIES */}
             {activeTab === 'companies' && (
                 <div className="animate-fadeIn">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100"><p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Total</p><p className="text-4xl font-black text-indigo-900">{companies.length}</p></div>
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100"><p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Pending</p><p className="text-4xl font-black text-amber-500">{companies.filter(c => c.status === 'Pending Approval').length}</p></div>
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100"><p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Active</p><p className="text-4xl font-black text-emerald-600">{companies.filter(c => c.status === 'Active').length}</p></div>
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-red-100"><p className="text-xs font-bold text-red-400 uppercase tracking-widest mb-2">Blacklisted</p><p className="text-4xl font-black text-red-600">{companies.filter(c => c.status === 'Blacklisted').length}</p></div>
-                    </div>
-
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                         <div className="p-6 border-b border-gray-100 flex justify-between items-center flex-wrap gap-4">
                             <h2 className="text-lg font-black text-gray-900">Platform System Registry</h2>
@@ -199,20 +299,20 @@ export default function SuperAdminDashboard() {
                                     <button onClick={() => setViewMode('list')} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${viewMode === 'list' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`}>List</button>
                                     <button onClick={() => setViewMode('grid')} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${viewMode === 'grid' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`}>Grid</button>
                                 </div>
-                                <button onClick={() => { setIsEditMode(false); setIsModalOpen(true); }} className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-bold">+ New Client</button>
+                                <button onClick={() => { setIsEditMode(false); setIsModalOpen(true); }} className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md">+ New Client</button>
                             </div>
                         </div>
 
-                        {loadingCompanies ? <div className="p-12 text-center text-gray-400 font-bold">Loading...</div> : companies.length === 0 ? <div className="p-12 text-center text-gray-400 font-bold">No companies found.</div> : viewMode === 'list' ? (
+                        {loadingCompanies ? <div className="p-12 text-center text-gray-400 font-bold">Loading...</div> : safeCompanies.length === 0 ? <div className="p-12 text-center text-gray-400 font-bold">No companies found.</div> : viewMode === 'list' ? (
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left border-collapse">
                                     <thead><tr className="bg-gray-50 text-gray-500 text-[10px] uppercase font-bold border-b border-gray-200"><th className="p-4">Entity</th><th className="p-4">Profile</th><th className="p-4">Govt IDs</th><th className="p-4">Status</th><th className="p-4 text-center">Actions</th></tr></thead>
                                     <tbody>
-                                        {companies.map(comp => (
+                                        {safeCompanies.map(comp => (
                                             <tr key={comp._id} className="border-b border-gray-50 hover:bg-gray-50/50">
                                                 <td className="p-4 flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center">
-                                                        {comp.logo ? <img src={comp.logo} alt="Logo" className="w-full h-full object-cover" /> : <span className="text-xs text-gray-400 font-black">{comp.companyName.substring(0,2)}</span>}
+                                                    <div className="w-10 h-10 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center flex-shrink-0">
+                                                        {comp.logo ? <img src={comp.logo} alt="Logo" className="w-full h-full object-cover" /> : <span className="text-xs text-gray-400 font-black">{comp.companyName?.substring(0,2)}</span>}
                                                     </div>
                                                     <div><p className="font-black text-gray-900">{comp.companyName}</p><p className="text-xs text-gray-500">{comp.adminEmail}</p></div>
                                                 </td>
@@ -220,6 +320,17 @@ export default function SuperAdminDashboard() {
                                                 <td className="p-4"><p className="text-xs"><span className="font-bold">GST:</span> {comp.gstNumber || 'N/A'}</p><p className="text-xs"><span className="font-bold">PAN:</span> {comp.panNumber || 'N/A'}</p></td>
                                                 <td className="p-4"><span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border ${getStatusBadge(comp.status)}`}>{comp.status}</span></td>
                                                 <td className="p-4 flex flex-wrap gap-2 justify-center">
+                                                    
+                                                    {/* 🥷 2. NAYA BUTTON: IMPERSONATE */}
+                                                    {comp.status === 'Active' && (
+                                                        <button 
+                                                            onClick={() => handleImpersonate(comp._id, comp.companyName)} 
+                                                            className="bg-purple-100 hover:bg-purple-200 text-purple-700 px-3 py-1 rounded-lg text-xs font-black shadow-sm transition-all border border-purple-200 flex items-center gap-1"
+                                                        >
+                                                            👁️ Login As
+                                                        </button>
+                                                    )}
+
                                                     {comp.status === 'Pending Approval' && <button onClick={() => handleStatusChange(comp._id, 'Active')} className="bg-emerald-50 text-emerald-700 px-2 py-1 rounded-lg text-xs font-bold border border-emerald-200">Approve</button>}
                                                     {comp.status === 'Active' && <button onClick={() => handleStatusChange(comp._id, 'Suspended')} className="bg-orange-50 text-orange-700 px-2 py-1 rounded-lg text-xs font-bold">Suspend</button>}
                                                     {comp.status === 'Suspended' && <button onClick={() => handleStatusChange(comp._id, 'Active')} className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded-lg text-xs font-bold">Activate</button>}
@@ -234,12 +345,12 @@ export default function SuperAdminDashboard() {
                             </div>
                         ) : (
                             <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-                                {companies.map(comp => (
-                                    <div key={comp._id} className="bg-white rounded-2xl border p-5 flex flex-col justify-between">
+                                {safeCompanies.map(comp => (
+                                    <div key={comp._id} className="bg-white rounded-2xl border shadow-sm p-5 flex flex-col justify-between hover:shadow-md transition-shadow">
                                         <div>
                                             <div className="mb-4 flex items-center justify-between">
-                                                <div className="w-12 h-12 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center">
-                                                    {comp.logo ? <img src={comp.logo} className="w-full h-full object-cover" /> : <span className="text-sm text-gray-400 font-black">{comp.companyName.substring(0,2)}</span>}
+                                                <div className="w-12 h-12 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center flex-shrink-0">
+                                                    {comp.logo ? <img src={comp.logo} className="w-full h-full object-cover" /> : <span className="text-sm text-gray-400 font-black">{comp.companyName?.substring(0,2)}</span>}
                                                 </div>
                                                 <span className={`px-2 py-1 rounded-full text-[9px] font-black uppercase border ${getStatusBadge(comp.status)}`}>{comp.status}</span>
                                             </div>
@@ -250,9 +361,17 @@ export default function SuperAdminDashboard() {
                                                 <p><span className="font-bold">GST:</span> {comp.gstNumber || 'N/A'}</p>
                                             </div>
                                         </div>
-                                        <div className="flex gap-2 border-t pt-3 border-gray-100 justify-end">
-                                            <button onClick={() => openEditModal(comp)} className="bg-gray-100 text-gray-800 font-bold px-3 py-1.5 rounded-lg text-xs">Edit</button>
-                                            <button onClick={() => handleDelete(comp._id)} className="bg-red-50 text-red-600 font-bold px-3 py-1.5 rounded-lg text-xs">Delete</button>
+                                        <div className="flex flex-col gap-2 border-t pt-3 border-gray-100">
+                                            {/* 🥷 IMPERSONATE BUTTON IN GRID VIEW */}
+                                            {comp.status === 'Active' && (
+                                                <button onClick={() => handleImpersonate(comp._id, comp.companyName)} className="w-full bg-purple-100 hover:bg-purple-200 text-purple-700 font-black px-3 py-2 rounded-lg text-xs transition-colors border border-purple-200 mb-1">
+                                                    👁️ Login As HR Admin
+                                                </button>
+                                            )}
+                                            <div className="flex gap-2 justify-end">
+                                                <button onClick={() => openEditModal(comp)} className="bg-gray-100 text-gray-800 font-bold px-3 py-1.5 rounded-lg text-xs hover:bg-gray-200 transition-colors">Edit</button>
+                                                <button onClick={() => handleDelete(comp._id)} className="bg-red-50 text-red-600 font-bold px-3 py-1.5 rounded-lg text-xs hover:bg-red-100 transition-colors">Delete</button>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
@@ -269,12 +388,12 @@ export default function SuperAdminDashboard() {
                         <div className="w-full md:w-auto relative z-10">
                             <div className="absolute top-0 left-0 opacity-10 text-9xl pointer-events-none -mt-8 -ml-4">₹</div>
                             <p className="text-sm font-bold text-indigo-200 uppercase tracking-widest mb-2">Total Platform MRR</p>
-                            <h2 className="text-5xl md:text-7xl font-black tracking-tight">{loadingBilling ? "..." : `₹${billingStats.totalRevenue.toLocaleString('en-IN')}`}</h2>
+                            <h2 className="text-5xl md:text-7xl font-black tracking-tight">{loadingBilling ? "..." : `₹${safeTotalRevenue.toLocaleString('en-IN')}`}</h2>
                         </div>
                         <div className="relative z-10 bg-white/10 p-6 rounded-2xl backdrop-blur-md border border-white/20 w-full md:w-auto">
                             <h3 className="text-xl font-black mb-1">Gateway Diagnostics</h3>
                             <p className="text-xs text-indigo-200 mb-5 max-w-xs">Simulate transaction to verify banking bridges.</p>
-                            <button onClick={handleTestPayment} className="bg-white text-indigo-900 font-black px-6 py-3.5 rounded-xl shadow-lg hover:scale-105 transition-transform flex items-center gap-2 w-full justify-center">
+                            <button onClick={handleTestPayment} className="bg-white text-indigo-900 hover:bg-gray-100 font-black px-6 py-3.5 rounded-xl shadow-lg hover:scale-105 transition-all flex items-center gap-2 w-full justify-center">
                                 💳 Test Checkout Flow
                             </button>
                         </div>
@@ -290,13 +409,13 @@ export default function SuperAdminDashboard() {
                         <table className="w-full text-left border-collapse">
                             <thead><tr className="bg-gray-50 text-gray-500 text-[10px] uppercase font-bold"><th className="p-4">Name</th><th className="p-4">Email</th><th className="p-4">Company</th><th className="p-4">Role</th><th className="p-4">Status</th></tr></thead>
                             <tbody>
-                                {loadingUsers ? <tr><td colSpan="5" className="p-8 text-center text-gray-400">Loading...</td></tr> : users.length === 0 ? <tr><td colSpan="5" className="p-8 text-center text-gray-400">No users found.</td></tr> : users.map((user, idx) => (
+                                {loadingUsers ? <tr><td colSpan="5" className="p-8 text-center text-gray-400">Loading...</td></tr> : (users || []).length === 0 ? <tr><td colSpan="5" className="p-8 text-center text-gray-400">No users found.</td></tr> : users.map((user, idx) => (
                                     <tr key={idx} className="border-b border-gray-50 hover:bg-gray-50">
-                                        <td className="p-4 font-bold text-gray-900">{user.name}</td>
-                                        <td className="p-4 text-sm text-gray-500">{user.email}</td>
-                                        <td className="p-4 text-sm font-medium">{user.company}</td>
-                                        <td className="p-4"><span className={`px-2 py-1 rounded text-[10px] font-black uppercase border ${user.role === 'Admin' ? 'bg-indigo-50 text-indigo-700' : 'bg-blue-50 text-blue-700'}`}>{user.role}</span></td>
-                                        <td className="p-4"><span className="text-emerald-600 text-xs font-bold">● {user.status}</span></td>
+                                        <td className="p-4 font-bold text-gray-900">{user?.name}</td>
+                                        <td className="p-4 text-sm text-gray-500">{user?.email}</td>
+                                        <td className="p-4 text-sm font-medium">{user?.company}</td>
+                                        <td className="p-4"><span className={`px-2 py-1 rounded text-[10px] font-black uppercase border ${user?.role === 'Admin' ? 'bg-indigo-50 text-indigo-700' : 'bg-blue-50 text-blue-700'}`}>{user?.role}</span></td>
+                                        <td className="p-4"><span className="text-emerald-600 text-xs font-bold">● {user?.status}</span></td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -313,14 +432,14 @@ export default function SuperAdminDashboard() {
                         <table className="w-full text-left border-collapse">
                             <thead><tr className="bg-gray-50 text-gray-500 text-[10px] uppercase font-bold"><th className="p-4">Company</th><th className="p-4">Issue Type</th><th className="p-4">Description</th><th className="p-4">Status</th><th className="p-4 text-center">Action</th></tr></thead>
                             <tbody>
-                                {loadingTickets ? <tr><td colSpan="5" className="p-8 text-center text-gray-400">Loading tickets...</td></tr> : tickets.length === 0 ? <tr><td colSpan="5" className="p-12 text-center text-gray-400 font-medium">No active tickets! 🎉</td></tr> : tickets.map((ticket) => (
+                                {loadingTickets ? <tr><td colSpan="5" className="p-8 text-center text-gray-400">Loading tickets...</td></tr> : (tickets || []).length === 0 ? <tr><td colSpan="5" className="p-12 text-center text-gray-400 font-medium">No active tickets! 🎉</td></tr> : tickets.map((ticket) => (
                                     <tr key={ticket._id} className="border-b border-gray-50 hover:bg-gray-50">
-                                        <td className="p-4"><p className="font-bold">{ticket.companyName}</p><p className="text-xs text-gray-500">{ticket.adminEmail}</p></td>
-                                        <td className="p-4"><span className="px-2 py-1 rounded text-[10px] font-black uppercase border bg-blue-50 text-blue-700">{ticket.issueType}</span></td>
-                                        <td className="p-4 text-sm max-w-xs truncate">{ticket.description}</td>
-                                        <td className="p-4"><span className={`px-3 py-1 rounded-full text-xs font-bold ${ticket.status === 'Resolved' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>{ticket.status}</span></td>
+                                        <td className="p-4"><p className="font-bold">{ticket?.companyName}</p><p className="text-xs text-gray-500">{ticket?.adminEmail}</p></td>
+                                        <td className="p-4"><span className="px-2 py-1 rounded text-[10px] font-black uppercase border bg-blue-50 text-blue-700">{ticket?.issueType}</span></td>
+                                        <td className="p-4 text-sm max-w-xs truncate">{ticket?.description}</td>
+                                        <td className="p-4"><span className={`px-3 py-1 rounded-full text-xs font-bold ${ticket?.status === 'Resolved' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>{ticket?.status}</span></td>
                                         <td className="p-4 text-center">
-                                            {ticket.status !== 'Resolved' ? <button onClick={() => handleResolveTicket(ticket._id)} className="bg-indigo-50 text-indigo-600 px-3 py-1 rounded-lg text-xs font-bold">Resolve</button> : <span className="text-gray-400 text-xs font-bold">Done ✓</span>}
+                                            {ticket?.status !== 'Resolved' ? <button onClick={() => handleResolveTicket(ticket._id)} className="bg-indigo-50 text-indigo-600 px-3 py-1 rounded-lg text-xs font-bold">Resolve</button> : <span className="text-gray-400 text-xs font-bold">Done ✓</span>}
                                         </td>
                                     </tr>
                                 ))}
@@ -335,31 +454,31 @@ export default function SuperAdminDashboard() {
                 <div className="animate-fadeIn max-w-4xl">
                     {settings && (
                         <form onSubmit={handleSaveSettings} className="space-y-6">
-                            <div className="bg-white p-8 rounded-2xl border border-red-100">
+                            <div className="bg-white p-8 rounded-2xl border border-red-100 shadow-sm">
                                 <div className="flex justify-between items-start mb-6">
                                     <div><h2 className="text-xl font-black text-gray-900">🛑 Emergency Maintenance</h2><p className="text-sm text-gray-500 mt-1">Locks all operations nodes instantly.</p></div>
                                     <label className="relative inline-flex items-center cursor-pointer">
                                         <input type="checkbox" className="sr-only peer" checked={settings.maintenanceMode} onChange={(e) => setSettings({...settings, maintenanceMode: e.target.checked})} />
-                                        <div className="w-14 h-7 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:bg-white after:rounded-full after:h-6 after:w-6 after:absolute after:top-[2px] after:left-[2px] peer-checked:bg-red-600 transition-all"></div>
+                                        <div className="w-14 h-7 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:bg-white after:rounded-full after:h-6 after:w-6 after:absolute after:top-[2px] after:left-[2px] peer-checked:bg-red-600 transition-all shadow-sm"></div>
                                     </label>
                                 </div>
-                                {settings.maintenanceMode && <textarea value={settings.maintenanceMessage} onChange={(e) => setSettings({...settings, maintenanceMessage: e.target.value})} className="w-full p-4 rounded-xl border border-red-200 text-sm outline-none" rows="3" />}
+                                {settings.maintenanceMode && <textarea value={settings.maintenanceMessage} onChange={(e) => setSettings({...settings, maintenanceMessage: e.target.value})} className="w-full p-4 rounded-xl border border-red-200 text-sm outline-none focus:ring-2 focus:ring-red-100" rows="3" />}
                             </div>
-                            <div className="bg-white p-8 rounded-2xl border border-gray-100">
+                            <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
                                 <h2 className="text-xl font-black text-gray-900 mb-6">🧩 Global Feature Flag Controllers</h2>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {['attendance', 'leave', 'payroll', 'performance', 'recruitment'].map(module => (
-                                        <div key={module} className="flex justify-between p-4 border rounded-xl">
+                                        <div key={module} className="flex justify-between items-center p-4 border rounded-xl hover:bg-gray-50 transition-colors">
                                             <span className="font-bold text-gray-700 capitalize">{module} Module</span>
                                             <label className="relative inline-flex items-center cursor-pointer">
-                                                <input type="checkbox" className="sr-only peer" checked={settings.modules[module]} onChange={(e) => setSettings({...settings, modules: {...settings.modules, [module]: e.target.checked}})} />
-                                                <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:bg-white after:rounded-full after:h-5 after:w-5 after:absolute after:top-[2px] after:left-[2px] peer-checked:bg-indigo-600 transition-all"></div>
+                                                <input type="checkbox" className="sr-only peer" checked={settings.modules?.[module] || false} onChange={(e) => setSettings({...settings, modules: {...settings.modules, [module]: e.target.checked}})} />
+                                                <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:bg-white after:rounded-full after:h-5 after:w-5 after:absolute after:top-[2px] after:left-[2px] peer-checked:bg-indigo-600 transition-all shadow-sm"></div>
                                             </label>
                                         </div>
                                     ))}
                                 </div>
                             </div>
-                            <button type="submit" disabled={savingSettings} className="bg-indigo-950 text-white font-black px-8 py-4 rounded-xl shadow-lg w-full">{savingSettings ? "Updating..." : "Save Settings"}</button>
+                            <button type="submit" disabled={savingSettings} className="bg-indigo-950 hover:bg-indigo-900 transition-colors text-white font-black px-8 py-4 rounded-xl shadow-lg w-full">{savingSettings ? "Updating Environment..." : "Save Production Matrix"}</button>
                         </form>
                     )}
                 </div>
@@ -371,66 +490,58 @@ export default function SuperAdminDashboard() {
                     <div className="bg-white rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
                         <div className="flex justify-between items-center p-6 border-b bg-gray-50">
                             <h3 className="text-xl font-black text-gray-900">{isEditMode ? 'Modify Enterprise Profile' : 'Provision New Client'}</h3>
-                            <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-red-500 font-bold bg-white p-2 rounded-full shadow-sm">✕</button>
+                            <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-red-500 font-bold bg-white p-2 rounded-full shadow-sm transition-colors">✕</button>
                         </div>
                         <div className="p-6 overflow-y-auto">
                             <form id="enterpriseForm" onSubmit={handleFormSubmit} className="space-y-8">
-                                {/* Section 1: Basic & Billing */}
-<div>
-    <h4 className="text-sm font-black text-indigo-600 uppercase mb-4 border-b pb-2">1. Account & Billing</h4>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div><label className="block text-xs font-bold text-gray-700 uppercase mb-2">Company Name *</label><input type="text" required value={formData.companyName} onChange={e => setFormData({...formData, companyName: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none" /></div>
-        
-        <div><label className="block text-xs font-bold text-gray-700 uppercase mb-2">Logo Upload</label><input type="file" accept="image/*" onChange={e => setLogoFile(e.target.files[0])} className="w-full px-4 py-2 border border-gray-300 rounded-xl outline-none bg-white" /></div>
-        
-        <div><label className="block text-xs font-bold text-gray-700 uppercase mb-2">Admin Email *</label><input type="email" required disabled={isEditMode} value={formData.adminEmail} onChange={e => setFormData({...formData, adminEmail: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none bg-gray-50 disabled:text-gray-400" /></div>
-        
-        <div><label className="block text-xs font-bold text-gray-700 uppercase mb-2">Phone</label><input type="text" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none" /></div>
-        
-        {/* 👇 YEH AAGAYA AAPKA MISSING SUBSCRIPTION PLAN 👇 */}
-        <div className="md:col-span-2">
-            <label className="block text-xs font-bold text-gray-700 uppercase mb-2">Subscription Plan *</label>
-            <select value={formData.subscriptionPlan} onChange={e => setFormData({...formData, subscriptionPlan: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none bg-white focus:ring-2 focus:ring-indigo-600">
-                <option value="Free Trial">Free Trial (₹0 / 30 Days)</option>
-                <option value="Starter">Starter (₹999 / month)</option>
-                <option value="Business">Business (₹2499 / month)</option>
-                <option value="Enterprise">Enterprise (₹4999 / month)</option>
-            </select>
-        </div>
-    </div>
-</div>
-                                {/* Section 2: Profile */}
+                                <div>
+                                    <h4 className="text-sm font-black text-indigo-600 uppercase mb-4 border-b pb-2">1. Account & Billing</h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div><label className="block text-xs font-bold text-gray-700 uppercase mb-2">Company Name *</label><input type="text" required value={formData.companyName} onChange={e => setFormData({...formData, companyName: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" /></div>
+                                        <div><label className="block text-xs font-bold text-gray-700 uppercase mb-2">Logo Upload</label><input type="file" accept="image/*" onChange={e => setLogoFile(e.target.files[0])} className="w-full px-4 py-2 border border-gray-300 rounded-xl outline-none bg-white focus:border-indigo-500" /></div>
+                                        <div><label className="block text-xs font-bold text-gray-700 uppercase mb-2">Admin Email *</label><input type="email" required disabled={isEditMode} value={formData.adminEmail} onChange={e => setFormData({...formData, adminEmail: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none bg-gray-50 disabled:text-gray-400" /></div>
+                                        <div><label className="block text-xs font-bold text-gray-700 uppercase mb-2">Phone</label><input type="text" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" /></div>
+                                        <div className="md:col-span-2">
+                                            <label className="block text-xs font-bold text-gray-700 uppercase mb-2">Subscription Plan *</label>
+                                            <select value={formData.subscriptionPlan} onChange={e => setFormData({...formData, subscriptionPlan: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                                                <option value="Free Trial">Free Trial (₹0 / 30 Days)</option>
+                                                <option value="Starter">Starter (₹999 / month)</option>
+                                                <option value="Business">Business (₹2499 / month)</option>
+                                                <option value="Enterprise">Enterprise (₹4999 / month)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div>
                                     <h4 className="text-sm font-black text-indigo-600 uppercase mb-4 border-b pb-2">2. Company Profile</h4>
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <div>
                                             <label className="block text-xs font-bold text-gray-700 uppercase mb-2">Type</label>
-                                            <select value={formData.companyType} onChange={e => setFormData({...formData, companyType: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none bg-white">
+                                            <select value={formData.companyType} onChange={e => setFormData({...formData, companyType: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none bg-white focus:border-indigo-500">
                                                 <option value="Startup">Startup</option><option value="SME">SME</option><option value="Enterprise">Enterprise</option><option value="MNC">MNC</option>
                                             </select>
                                         </div>
-                                        <div><label className="block text-xs font-bold text-gray-700 uppercase mb-2">Industry</label><input type="text" placeholder="e.g. IT, Healthcare" value={formData.industryType} onChange={e => setFormData({...formData, industryType: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none" /></div>
+                                        <div><label className="block text-xs font-bold text-gray-700 uppercase mb-2">Industry</label><input type="text" placeholder="e.g. IT, Healthcare" value={formData.industryType} onChange={e => setFormData({...formData, industryType: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none focus:border-indigo-500" /></div>
                                         <div>
                                             <label className="block text-xs font-bold text-gray-700 uppercase mb-2">Size (Employees)</label>
-                                            <select value={formData.companySize} onChange={e => setFormData({...formData, companySize: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none bg-white">
+                                            <select value={formData.companySize} onChange={e => setFormData({...formData, companySize: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none bg-white focus:border-indigo-500">
                                                 <option value="1-10">1-10</option><option value="11-50">11-50</option><option value="51-200">51-200</option><option value="200+">200+</option>
                                             </select>
                                         </div>
                                     </div>
                                 </div>
-                                {/* Section 3: Legal / KYC */}
                                 <div>
                                     <h4 className="text-sm font-black text-indigo-600 uppercase mb-4 border-b pb-2">3. Legal & KYC</h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div><label className="block text-xs font-bold text-gray-700 uppercase mb-2">GST Number</label><input type="text" placeholder="22AAAAA0000A1Z5" value={formData.gstNumber} onChange={e => setFormData({...formData, gstNumber: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none" /></div>
-                                        <div><label className="block text-xs font-bold text-gray-700 uppercase mb-2">PAN Number</label><input type="text" placeholder="ABCDE1234F" value={formData.panNumber} onChange={e => setFormData({...formData, panNumber: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none" /></div>
+                                        <div><label className="block text-xs font-bold text-gray-700 uppercase mb-2">GST Number</label><input type="text" placeholder="22AAAAA0000A1Z5" value={formData.gstNumber} onChange={e => setFormData({...formData, gstNumber: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none focus:border-indigo-500" /></div>
+                                        <div><label className="block text-xs font-bold text-gray-700 uppercase mb-2">PAN Number</label><input type="text" placeholder="ABCDE1234F" value={formData.panNumber} onChange={e => setFormData({...formData, panNumber: e.target.value})} className="w-full px-4 py-3 rounded-xl border border-gray-300 outline-none focus:border-indigo-500" /></div>
                                     </div>
                                 </div>
                             </form>
                         </div>
                         <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end">
-                            <button onClick={() => setIsModalOpen(false)} className="px-6 py-3 text-sm font-bold text-gray-500 mr-4">Cancel</button>
-                            <button form="enterpriseForm" type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-8 py-3 rounded-xl shadow-lg">{isEditMode ? 'Update Client' : 'Register Client'}</button>
+                            <button onClick={() => setIsModalOpen(false)} className="px-6 py-3 text-sm font-bold text-gray-500 hover:text-gray-700 mr-4 transition-colors">Cancel</button>
+                            <button form="enterpriseForm" type="submit" className="bg-indigo-600 hover:bg-indigo-700 transition-colors text-white font-bold px-8 py-3 rounded-xl shadow-lg">{isEditMode ? 'Update Client' : 'Register Client'}</button>
                         </div>
                     </div>
                 </div>
