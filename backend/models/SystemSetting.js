@@ -15,6 +15,23 @@ const systemSettingSchema = new mongoose.Schema({
         payroll: { type: Boolean, default: true },
         performance: { type: Boolean, default: false },
         recruitment: { type: Boolean, default: false }
+    },
+
+    // ⚖️ Legal & Compliance (From your Settings Tab)
+    termsAndConditions: { type: String, default: '' },
+    privacyPolicy: { type: String, default: '' },
+
+    // 📧 Notification Gateways (For Announcements)
+    smtpSettings: {
+        host: { type: String, default: '' },
+        port: { type: Number, default: 587 },
+        user: { type: String, default: '' },
+        password: { type: String, default: '' }
+    },
+    smsSettings: {
+        provider: { type: String, default: 'Twilio' }, // e.g., Twilio, Fast2SMS
+        apiKey: { type: String, default: '' },
+        senderId: { type: String, default: '' }
     }
 }, { timestamps: true });
 

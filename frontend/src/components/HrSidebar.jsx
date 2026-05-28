@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-
+import NotificationBell from './NotificationBell';
 export default function HRSidebar({ activeModule, setActiveModule }) {
     const navigate = useNavigate();
     const location = useLocation();

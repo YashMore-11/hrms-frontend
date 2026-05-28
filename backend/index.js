@@ -1,4 +1,6 @@
 const superAdminRoutes = require('./routes/superAdmin');
+const userRoutes = require('./routes/user');
+const rbacRoutes = require('./routes/rbacRoutes');
 // ==========================================
 // 📦 CORE MODULE IMPORTS
 // ==========================================
@@ -66,6 +68,11 @@ app.use('/api/employees', employeeRoutes);
 app.use('/api/leaves', leaveRoutes);
 app.use('/api/attendance', attendanceRoutes); // 👈 ✅ ADDED: Mounted the missing metrics route path layer!
 app.use('/api/superadmin', superAdminRoutes);
+app.use('/api/user', userRoutes);
+app.use('/api/rbac', rbacRoutes);
+app.use('/api/master-data', require('./routes/masterDataRoutes'));
+app.use('/api/helpdesk', require('./routes/helpdeskRoutes'));
+app.use('/api/security', require('./routes/securityRoutes'));
 
 // ==========================================
 // 🛑 ERROR HANDLING GATES & SYSTEM SHIELDS

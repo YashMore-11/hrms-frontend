@@ -1,4 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom';
+import NotificationBell from './NotificationBell';
 
 export default function AdminSidebar({ activeModule, setActiveModule }) {
     const navigate = useNavigate();
@@ -63,15 +64,25 @@ export default function AdminSidebar({ activeModule, setActiveModule }) {
 
             {/* Top Identity Hub */}
             <div className="space-y-6">
-                <div className="flex items-center gap-3 px-2 py-1">
-                    <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-700 to-indigo-800 flex items-center justify-center text-white text-lg font-bold shadow-md shadow-indigo-100 dark:shadow-none">
-                        AM
+                
+                {/* 👇 MODIFIED THIS SECTION TO INCLUDE THE BELL 👇 */}
+                <div className="flex items-center justify-between px-2 py-1">
+                    <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-700 to-indigo-800 flex items-center justify-center text-white text-lg font-bold shadow-md shadow-indigo-100 dark:shadow-none">
+                            AM
+                        </div>
+                        <div>
+                            <h2 className="text-sm font-bold text-zinc-900 dark:text-zinc-50 tracking-tight leading-none">Company name</h2>
+                            <span className="text-[10px] font-bold text-gray-400 font-mono mt-1 block tracking-tighter">Since-3220</span>
+                        </div>
                     </div>
+                    
+                    {/* Yahan Notification Bell Add Ho Gayi Hai */}
                     <div>
-                        <h2 className="text-sm font-bold text-zinc-900 dark:text-zinc-50 tracking-tight leading-none">Company name</h2>
-                        <span className="text-[10px] font-bold text-gray-400 font-mono mt-1 block tracking-tighter">Since-3220</span>
+                        <NotificationBell />
                     </div>
                 </div>
+                {/* 👆 MODIFICATION ENDS HERE 👆 */}
 
                 {/* Dynamic Navigation Options Loop */}
                 <nav className="space-y-1">

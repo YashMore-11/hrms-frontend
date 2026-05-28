@@ -12,6 +12,59 @@ const Razorpay = require('razorpay');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET || "HRMS_SUPER_SECRET_KEY@_123";
+const nodemailer = require('nodemailer');
+const schedule = require('node-schedule');
+const twilio = require('twilio');
+const Announcement = require('../models/Announcement');
+// const nodemailer = require('nodemailer'); // Uncomment after installing
+// ==========================================
+// 📢 GET: Fetch Notification History & Logs
+// ==========================================
+router.get('/announcements', async (req, res) => {
+    try {
+        const announcements = await Announcement.find().sort({ createdAt: -1 });
+        res.status(200).json(announcements);
+    } catch (err) {
+        res.status(500).json({ message: "Failed to fetch announcements", error: err.message });
+    }
+});
+
+// ==========================================
+// 🚀 POST: Create & Send Announcement
+// ==========================================
+router.post('/announcements', async (req, res) => {
+    try {
+        const { title, message, priority, targetAudience, targetCompanies, channels, scheduledAt } = req.body;
+
+        const newAnnouncement = new Announcement({
+            title, message, priority, targetAudience, targetCompanies, channels,
+            status: scheduledAt ? 'Scheduled' : 'Sent',
+            scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
+            sentAt: scheduledAt ? null : new Date()
+        });
+
+        await newAnnouncement.save();
+
+        // 🚨 EMERGENCY BROADCAST LOGIC
+        if (priority === 'Emergency') {
+            console.log("!!! TRIGGERING EMERGENCY PROTOCOLS !!!");
+            // Here you would immediately fire your SMS/Email functions bypassing normal queues
+        }
+
+        // 📧 EMAIL DISPATCH LOGIC (Example structure)
+        if (channels.email && !scheduledAt) {
+            // 1. Fetch SMTP settings from SystemSetting DB
+            // 2. Setup Nodemailer transporter
+            // 3. Find target user emails based on targetAudience
+            // 4. Send emails
+            console.log("Simulating Email Dispatch to targets...");
+        }
+
+        res.status(201).json({ message: "Announcement processed successfully!", announcement: newAnnouncement });
+    } catch (err) {
+        res.status(500).json({ message: "Failed to create announcement", error: err.message });
+    }
+});
 
 // Razorpay Instance (Aap apne asli Test Keys Razorpay Dashboard se nikal kar yahan daal sakte ho baad mein)
 const razorpayInstance = new Razorpay({
@@ -358,6 +411,276 @@ router.put('/settings', async (req, res) => {
         res.status(200).json({ message: "System settings updated successfully!", settings: updatedSettings });
     } catch (err) {
         res.status(500).json({ message: "Settings update failed", error: err.message });
+    }
+});
+// ==========================================
+// 📢 GET: Fetch Announcements & Logs
+// ==========================================
+router.get('/announcements', async (req, res) => {
+    try {
+        const announcements = await Announcement.find().sort({ createdAt: -1 });
+        res.status(200).json(announcements);
+    } catch (err) {
+        res.status(500).json({ message: "Failed to fetch announcements", error: err.message });
+    }
+});
+
+// ==========================================
+// 🚀 POST: Broadcast Notification Engine
+// ==========================================
+router.post('/announcements', async (req, res) => {
+    try {
+        const { title, message, priority, targetAudience, channels, scheduledAt } = req.body;
+
+        // 1. Fetch Global Settings for API Keys & SMTP
+        const settings = await SystemSetting.findOne();
+        if (!settings) return res.status(400).json({ message: "System settings not configured!" });
+
+        // 2. Save Announcement to Database
+        const isScheduled = scheduledAt && new Date(scheduledAt) > new Date();
+        const newAnnouncement = new Announcement({
+            title, 
+            message, 
+            priority, 
+            targetAudience, 
+            channels,
+            status: isScheduled ? 'Scheduled' : 'Sent',
+            scheduledAt: isScheduled ? new Date(scheduledAt) : null,
+            sentAt: isScheduled ? null : new Date()
+        });
+        await newAnnouncement.save();
+
+        // 3. Determine Target Audience Emails & Phone Numbers
+        let targetEmails = [];
+        let targetPhones = [];
+
+        if (targetAudience === 'All') {
+            const admins = await Admin.find({}, 'email phone');
+            const employees = await Employee.find({}, 'email phone');
+            targetEmails = [...admins.map(a => a.email), ...employees.map(e => e.email)];
+            targetPhones = [...admins.map(a => a.phone), ...employees.map(e => e.phone)];
+        } else if (targetAudience === 'Admins') {
+            const admins = await Admin.find({}, 'email phone');
+            targetEmails = admins.map(a => a.email);
+            targetPhones = admins.map(a => a.phone);
+        }
+
+        // Clean up empty/null values
+        targetEmails = targetEmails.filter(email => email);
+        targetPhones = targetPhones.filter(phone => phone);
+
+        // 4. Create the Dispatch Function
+        const dispatchNotifications = async () => {
+            console.log(`🚀 Dispatching Broadcast: ${title}`);
+
+            // 📧 EMAIL DISPATCH (Nodemailer)
+            if (channels.email && targetEmails.length > 0 && settings.smtpSettings?.host) {
+                try {
+                    const transporter = nodemailer.createTransport({
+                        host: settings.smtpSettings.host,
+                        port: settings.smtpSettings.port,
+                        secure: settings.smtpSettings.port === 465, 
+                        auth: {
+                            user: settings.smtpSettings.user,
+                            pass: settings.smtpSettings.password
+                        }
+                    });
+
+                    await transporter.sendMail({
+                        from: `"System Admin" <${settings.smtpSettings.user}>`,
+                        to: targetEmails, // Sends as a bulk list (consider bcc for privacy in production)
+                        subject: priority === 'Emergency' ? `🚨 URGENT: ${title}` : title,
+                        html: `
+                            <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                                <h2 style="color: #312e81;">${title}</h2>
+                                <p style="font-size: 16px; color: #333;">${message}</p>
+                                <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+                                <p style="font-size: 12px; color: #999;">This is an automated system broadcast. Please do not reply.</p>
+                            </div>
+                        `
+                    });
+                    console.log("✅ Emails sent successfully!");
+                } catch (emailErr) {
+                    console.error("❌ Email Dispatch Failed:", emailErr.message);
+                }
+            }
+
+            // 📱 SMS DISPATCH (Twilio Example)
+            if (channels.sms && targetPhones.length > 0 && settings.smsSettings?.apiKey) {
+                try {
+                    // Assuming Twilio: apiKey stores 'AccountSID:AuthToken'
+                    const [accountSid, authToken] = settings.smsSettings.apiKey.split(':'); 
+                    const client = twilio(accountSid, authToken);
+
+                    // Twilio requires looping through numbers for bulk SMS
+                    for (const phone of targetPhones) {
+                        await client.messages.create({
+                            body: `${title}: ${message}`,
+                            from: settings.smsSettings.senderId || '+1234567890',
+                            to: phone
+                        });
+                    }
+                    console.log("✅ SMS sent successfully!");
+                } catch (smsErr) {
+                    console.error("❌ SMS Dispatch Failed:", smsErr.message);
+                }
+            }
+
+            // Mark as sent if it was scheduled
+            if (isScheduled) {
+                newAnnouncement.status = 'Sent';
+                newAnnouncement.sentAt = new Date();
+                await newAnnouncement.save();
+            }
+        };
+
+        // 5. Execute or Schedule
+        if (isScheduled) {
+            schedule.scheduleJob(new Date(scheduledAt), dispatchNotifications);
+            res.status(201).json({ message: "Broadcast scheduled successfully!", announcement: newAnnouncement });
+        } else {
+            // Do not await dispatchNotifications so the API responds instantly while emails send in background
+            dispatchNotifications(); 
+            res.status(201).json({ message: "Broadcast dispatched successfully!", announcement: newAnnouncement });
+        }
+
+    } catch (err) {
+        res.status(500).json({ message: "Failed to process announcement", error: err.message });
+    }
+});
+// ==========================================
+// 📢 GET: Fetch Announcements & Logs
+// ==========================================
+router.get('/announcements', async (req, res) => {
+    try {
+        const announcements = await Announcement.find().sort({ createdAt: -1 });
+        res.status(200).json(announcements);
+    } catch (err) {
+        res.status(500).json({ message: "Failed to fetch announcements", error: err.message });
+    }
+});
+
+// ==========================================
+// 🚀 POST: Broadcast Notification Engine
+// ==========================================
+router.post('/announcements', async (req, res) => {
+    try {
+        const { title, message, priority, targetAudience, channels, scheduledAt } = req.body;
+
+        // 1. Fetch Global Settings for API Keys & SMTP
+        const settings = await SystemSetting.findOne();
+        if (!settings) return res.status(400).json({ message: "System settings not configured!" });
+
+        // 2. Save Announcement to Database
+        const isScheduled = scheduledAt && new Date(scheduledAt) > new Date();
+        const newAnnouncement = new Announcement({
+            title, 
+            message, 
+            priority, 
+            targetAudience, 
+            channels,
+            status: isScheduled ? 'Scheduled' : 'Sent',
+            scheduledAt: isScheduled ? new Date(scheduledAt) : null,
+            sentAt: isScheduled ? null : new Date()
+        });
+        await newAnnouncement.save();
+
+        // 3. Determine Target Audience Emails & Phone Numbers
+        let targetEmails = [];
+        let targetPhones = [];
+
+        if (targetAudience === 'All') {
+            const admins = await Admin.find({}, 'email phone');
+            const employees = await Employee.find({}, 'email phone');
+            targetEmails = [...admins.map(a => a.email), ...employees.map(e => e.email)];
+            targetPhones = [...admins.map(a => a.phone), ...employees.map(e => e.phone)];
+        } else if (targetAudience === 'Admins') {
+            const admins = await Admin.find({}, 'email phone');
+            targetEmails = admins.map(a => a.email);
+            targetPhones = admins.map(a => a.phone);
+        }
+
+        // Clean up empty/null values
+        targetEmails = targetEmails.filter(email => email);
+        targetPhones = targetPhones.filter(phone => phone);
+
+        // 4. Create the Dispatch Function
+        const dispatchNotifications = async () => {
+            console.log(`🚀 Dispatching Broadcast: ${title}`);
+
+            // 📧 EMAIL DISPATCH (Nodemailer)
+            if (channels.email && targetEmails.length > 0 && settings.smtpSettings?.host) {
+                try {
+                    const transporter = nodemailer.createTransport({
+                        host: settings.smtpSettings.host,
+                        port: settings.smtpSettings.port,
+                        secure: settings.smtpSettings.port === 465, 
+                        auth: {
+                            user: settings.smtpSettings.user,
+                            pass: settings.smtpSettings.password
+                        }
+                    });
+
+                    await transporter.sendMail({
+                        from: `"System Admin" <${settings.smtpSettings.user}>`,
+                        to: targetEmails, // Sends as a bulk list (consider bcc for privacy in production)
+                        subject: priority === 'Emergency' ? `🚨 URGENT: ${title}` : title,
+                        html: `
+                            <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                                <h2 style="color: #312e81;">${title}</h2>
+                                <p style="font-size: 16px; color: #333;">${message}</p>
+                                <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+                                <p style="font-size: 12px; color: #999;">This is an automated system broadcast. Please do not reply.</p>
+                            </div>
+                        `
+                    });
+                    console.log("✅ Emails sent successfully!");
+                } catch (emailErr) {
+                    console.error("❌ Email Dispatch Failed:", emailErr.message);
+                }
+            }
+
+            // 📱 SMS DISPATCH (Twilio Example)
+            if (channels.sms && targetPhones.length > 0 && settings.smsSettings?.apiKey) {
+                try {
+                    // Assuming Twilio: apiKey stores 'AccountSID:AuthToken'
+                    const [accountSid, authToken] = settings.smsSettings.apiKey.split(':'); 
+                    const client = twilio(accountSid, authToken);
+
+                    // Twilio requires looping through numbers for bulk SMS
+                    for (const phone of targetPhones) {
+                        await client.messages.create({
+                            body: `${title}: ${message}`,
+                            from: settings.smsSettings.senderId || '+1234567890',
+                            to: phone
+                        });
+                    }
+                    console.log("✅ SMS sent successfully!");
+                } catch (smsErr) {
+                    console.error("❌ SMS Dispatch Failed:", smsErr.message);
+                }
+            }
+
+            // Mark as sent if it was scheduled
+            if (isScheduled) {
+                newAnnouncement.status = 'Sent';
+                newAnnouncement.sentAt = new Date();
+                await newAnnouncement.save();
+            }
+        };
+
+        // 5. Execute or Schedule
+        if (isScheduled) {
+            schedule.scheduleJob(new Date(scheduledAt), dispatchNotifications);
+            res.status(201).json({ message: "Broadcast scheduled successfully!", announcement: newAnnouncement });
+        } else {
+            // Do not await dispatchNotifications so the API responds instantly while emails send in background
+            dispatchNotifications(); 
+            res.status(201).json({ message: "Broadcast dispatched successfully!", announcement: newAnnouncement });
+        }
+
+    } catch (err) {
+        res.status(500).json({ message: "Failed to process announcement", error: err.message });
     }
 });
 module.exports = router;

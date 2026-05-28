@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom'; // Using React Router Dom hooks
-
+import NotificationBell from './NotificationBell';
 export default function EmployeeSidebar({ activeModule, setActiveModule }) {
   const navigate = useNavigate(); // Standard React Router redirect hook
   const location = useLocation(); // Hook to get current active browser URL path

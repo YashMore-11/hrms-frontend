@@ -278,5 +278,4 @@ router.put('/profile', verifyToken, async (req, res) => {
         res.status(500).json({ message: "Internal server fault committing changes down to database layer." });
     }
 });
-
 module.exports = router;

@@ -12,6 +12,11 @@ const AdminSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  roleId: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: 'Role',
+  default: null 
+  },
   email: {
     type: String,
     required: true,

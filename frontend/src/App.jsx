@@ -2,13 +2,14 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import LoginGateway from './login';
 import AdminSignup from './admin/AdminSignup';
 import UpgradePlan from './UpgradePlan';
+import MasterDataManagement from './superadmin/MasterDataManagement';
+import SecurityAuditConsole from './superadmin/SecurityAuditConsole';
 
 // Employee View Components
 import EmployeeDashboard from './employee/dashboard';
 import EmployeeProfile from './employee/profile';
 import AttendancePage from './employee/attendance';
 import LeavePage from './employee/leave';
-
 
 import HRDashboard from './hr/dashboard';
 import HRProfile from './hr/profile';
@@ -26,6 +27,7 @@ import AdminProfile from './admin/Profile';
 
 // Super Admin View Components
 import SuperAdminDashboard from './superadmin/SuperAdminDashboard';
+import RoleManagement from './superadmin/RoleManagement';
 
 function RoleGuard({ children, allowedRoles }) {
   const token = localStorage.getItem('authToken');
@@ -152,7 +154,23 @@ export default function App() {
             <SuperAdminDashboard />
           </RoleGuard>
         } />
-
+        <Route path="/superadmin/roles" element={
+          <RoleGuard allowedRoles={['superadmin']}>
+            <RoleManagement />
+          </RoleGuard>
+        } />
+        
+        {/* 👇 YAHAN MASTER DATA KA ROUTE ADD KIYA HAI 👇 */}
+        <Route path="/superadmin/master-data" element={
+          <RoleGuard allowedRoles={['superadmin']}>
+            <MasterDataManagement />
+          </RoleGuard>
+        } />
+        <Route path="/superadmin/security" element={
+          <RoleGuard allowedRoles={['superadmin']}>
+            <SecurityAuditConsole />
+          </RoleGuard>    
+        } />
         {/* Fallback Catch-All Safety Net Route */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
